@@ -46,7 +46,7 @@ export default function EventPage({ eventId }: EventPageProps) {
   }, [event?.id])
 
   useEffect(() => { loadEvent() }, [loadEvent])
-  useEffect(() => { if (authed) loadRSVPs() }, [authed, loadRSVPs])
+  useEffect(() => { loadRSVPs() }, [loadRSVPs])
 
   const going = rsvps.filter(r => r.status === 'going').reduce((sum, r) => sum + 1 + (r.plus_ones || 0), 0)
   const maybe = rsvps.filter(r => r.status === 'maybe').length
