@@ -27,7 +27,7 @@ serve(async (req) => {
     // Fetch RSVP details
     const { data: rsvpData, error: rsvpError } = await supabase
       .from("loop_rsvps")
-      .select("status, plus_ones, attendee:loop_attendees(name), event:loop_events(title, event_date, location)")
+      .select("status, plus_ones, attendee:loop_attendees(name), event:loop_events(title, event_date, location, organizer_id)")
       .eq("id", record.rsvp_id)
       .single();
 
@@ -85,8 +85,8 @@ serve(async (req) => {
       `;
     }
 
-    // Send email via Resend
-    const res = await fetch("https://api.resend.com/emails", {
+    // 1. Send email to the Guest
+    const guestRes = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -100,13 +100,55 @@ serve(async (req) => {
       })
     });
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error("Resend API Error:", errorText);
-      return new Response(`Failed to send email: ${errorText}`, { status: 500 });
+    if (!guestRes.ok) {
+      console.error("Resend API Error (Guest):", await guestRes.text());
+    } else {
+      console.log(`Successfully sent ${status} email to guest ${record.email}`);
     }
 
-    console.log(`Successfully sent ${status} email to ${record.email}`);
+    // 2. Send notification to the Organizer
+    if (event.organizer_id) {
+      const { data: userData } = await supabase.auth.admin.getUserById(event.organizer_id);
+      const organizerEmail = userData?.user?.email;
+      
+      if (organizerEmail) {
+        const plusOneText = plus_ones > 0 ? ` + ${plus_ones}` : "";
+        const orgSubject = `New RSVP: ${attendeeName} is ${status} for ${eventTitle}`;
+        const orgHtml = `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+            <h2 style="color: #8b5cf6;">RSVP Update</h2>
+            <p><strong>${attendeeName}</strong> has just updated their RSVP for <strong>${eventTitle}</strong>.</p>
+            <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 0 0 8px;"><strong>Status:</strong> ${status.toUpperCase()} ${plusOneText}</p>
+              <p style="margin: 0 0 8px;"><strong>Guest Email:</strong> ${record.email}</p>
+              ${record.contact_number ? `<p style="margin: 0;"><strong>Guest Phone:</strong> ${record.contact_number}</p>` : ''}
+            </div>
+            <p>Check your Loop Dashboard for the full guest list!</p>
+          </div>
+        `;
+
+        const orgRes = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${resendApiKey}`
+          },
+          body: JSON.stringify({
+            from: "Loop Notifications <hello@loop.mondero.nz>",
+            to: [organizerEmail],
+            subject: orgSubject,
+            html: orgHtml
+          })
+        });
+
+        if (!orgRes.ok) {
+          console.error("Resend API Error (Organizer):", await orgRes.text());
+        } else {
+          console.log(`Successfully notified organizer ${organizerEmail}`);
+        }
+      }
+    }
+
     return new Response(JSON.stringify({ success: true }), { status: 200, headers: { "Content-Type": "application/json" } });
 
   } catch (err) {
