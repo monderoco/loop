@@ -112,6 +112,15 @@ export default function EventPage({ eventId }: EventPageProps) {
           </div>
         </section>
 
+        {event.status === 'cancelled' && (
+          <div className="card fade-in" style={{ background: 'var(--surface-sunken)', border: '1px solid #fecaca', marginBottom: '2rem' }}>
+            <h2 style={{ color: '#dc2626', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              ⚠️ This Event Has Been Cancelled
+            </h2>
+            <p style={{ margin: '0.5rem 0 0', color: '#7f1d1d' }}>The organizer has cancelled this event.</p>
+          </div>
+        )}
+
         {/* ── Stats bar ── */}
         {rsvps.length > 0 && (
           <div className="stats-bar fade-in fade-in--delay-1" style={{ marginBottom: '2rem' }}>
@@ -158,12 +167,13 @@ export default function EventPage({ eventId }: EventPageProps) {
             </div>
 
             {/* RSVP section */}
-            {authed ? (
-              <RSVPForm
-                eventId={event.id}
-                onRSVPChange={setRsvps}
-              />
-            ) : (
+            {event.status !== 'cancelled' && (
+              authed ? (
+                <RSVPForm
+                  eventId={event.id}
+                  onRSVPChange={setRsvps}
+                />
+              ) : (
               <div
                 className="card fade-in"
                 style={{
@@ -195,7 +205,7 @@ export default function EventPage({ eventId }: EventPageProps) {
                   RSVP to this event
                 </button>
               </div>
-            )}
+            ))}
 
             {/* Food & Decor summary (if there are pledges) */}
             {(food > 0 || decor > 0) && (

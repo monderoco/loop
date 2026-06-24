@@ -275,3 +275,13 @@ export async function deleteRSVP(id: string): Promise<boolean> {
   if (error) { console.error('deleteRSVP error:', error); return false }
   return true
 }
+
+// ── Notifications ────────────────────────────────────────────────────────────
+
+/** Notify guests about an event update or cancellation */
+export async function notifyEventUpdate(eventId: string, updateType: 'update' | 'cancel', message: string = '') {
+  const { error } = await supabase.functions.invoke('notify-event-update', {
+    body: { eventId, updateType, message }
+  })
+  if (error) console.error('notifyEventUpdate error:', error)
+}

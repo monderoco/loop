@@ -9,6 +9,7 @@ export interface Event {
   video_url?: string
   organizer_id?: string
   organizer?: Organizer
+  status?: 'active' | 'cancelled'
   created_at: string
   updated_at: string
 }

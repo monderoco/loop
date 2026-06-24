@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useOrganizer } from '../../context/OrganizerContext'
-import { getEvent, createEvent, updateEvent } from '../../lib/db'
+import { getEvent, createEvent, updateEvent, notifyEventUpdate } from '../../lib/db'
 import type { Event } from '../../types'
 import { format } from 'date-fns'
 import {
@@ -24,6 +24,7 @@ const BLANK_FORM = {
   event_time: '18:00',
   cover_image_url: '',
   video_url: '',
+  status: 'active' as 'active' | 'cancelled',
 }
 
 export default function EventFormPage({ eventId }: EventFormPageProps) {
@@ -36,6 +37,8 @@ export default function EventFormPage({ eventId }: EventFormPageProps) {
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [previewMd, setPreviewMd] = useState(false)
+  const [updateMessage, setUpdateMessage] = useState('')
+  const [cancelling, setCancelling] = useState(false)
 
   const loadEvent = useCallback(async () => {
     if (!eventId) return
@@ -52,6 +55,7 @@ export default function EventFormPage({ eventId }: EventFormPageProps) {
         event_time: format(dt, 'HH:mm'),
         cover_image_url: event.cover_image_url || '',
         video_url: event.video_url || '',
+        status: event.status || 'active',
       })
     }
     setLoading(false)
@@ -103,10 +107,38 @@ export default function EventFormPage({ eventId }: EventFormPageProps) {
     setSaving(false)
     setSaved(true)
 
+    // Notify guests if it's an edit and a message is provided, or always notify?
+    // Let's notify if it's an edit
+    if (isEdit && form.status !== 'cancelled') {
+      await notifyEventUpdate(eventId!, 'update', updateMessage.trim())
+    }
+
     if (!isEdit) {
       // Redirect to manage page for the newly created event
       setTimeout(() => navigate(`/organizer/event/${result!.id}/manage`), 800)
+    } else {
+      setTimeout(() => setSaved(false), 2500)
     }
+  }
+
+  async function handleCancelEvent() {
+    if (!eventId || !confirm('Are you sure you want to cancel this event? This will notify all guests who provided their email.')) return;
+    
+    setCancelling(true)
+    setError(null)
+    
+    const result = await updateEvent(eventId, { status: 'cancelled' })
+    if (!result) {
+      setError('Failed to cancel event.')
+      setCancelling(false)
+      return
+    }
+    
+    await notifyEventUpdate(eventId, 'cancel', updateMessage.trim())
+    
+    setCancelling(false)
+    setForm(prev => ({ ...prev, status: 'cancelled' }))
+    alert('Event cancelled and guests notified.')
   }
 
   if (loading) {
@@ -301,28 +333,57 @@ export default function EventFormPage({ eventId }: EventFormPageProps) {
           )}
         </div>
 
+        {isEdit && form.status !== 'cancelled' && (
+          <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'var(--surface-sunken)' }}>
+            <p className="section-heading" style={{ marginBottom: 0 }}>Notify Guests</p>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+              If you are updating or cancelling the event, you can optionally include a message. All guests who provided their email will be notified.
+            </p>
+            <textarea
+              className="input"
+              placeholder="e.g. We've changed the start time to 7 PM!"
+              value={updateMessage}
+              onChange={e => setUpdateMessage(e.target.value)}
+              style={{ minHeight: '80px' }}
+            />
+          </div>
+        )}
+
         {/* Save button */}
-        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+          {isEdit && form.status !== 'cancelled' && (
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={handleCancelEvent}
+              disabled={cancelling || saving}
+              style={{ marginRight: 'auto' }}
+            >
+              {cancelling ? <Loader2 size={15} style={{ animation: 'spin 0.7s linear infinite' }} /> : 'Cancel Event'}
+            </button>
+          )}
           <button
             type="button"
             className="btn btn-secondary"
             onClick={() => navigate('/organizer/dashboard')}
           >
-            Cancel
+            Back
           </button>
-          <button
-            id="btn-save-event"
-            type="submit"
-            className={`btn ${saved ? 'btn-going active' : 'btn-primary'} btn-lg`}
-            disabled={saving}
-          >
-            {saving
-              ? <><Loader2 size={15} style={{ animation: 'spin 0.7s linear infinite' }} /> Saving…</>
-              : saved
-              ? <><CheckCircle2 size={15} /> Saved!</>
-              : <><Save size={15} /> {isEdit ? 'Save changes' : 'Create event'}</>
-            }
-          </button>
+          {form.status !== 'cancelled' && (
+            <button
+              id="btn-save-event"
+              type="submit"
+              className={`btn ${saved ? 'btn-going active' : 'btn-primary'} btn-lg`}
+              disabled={saving || cancelling}
+            >
+              {saving
+                ? <><Loader2 size={15} style={{ animation: 'spin 0.7s linear infinite' }} /> Saving…</>
+                : saved
+                ? <><CheckCircle2 size={15} /> Saved!</>
+                : <><Save size={15} /> {isEdit ? 'Save changes' : 'Create event'}</>
+              }
+            </button>
+          )}
         </div>
       </form>
     </div>
