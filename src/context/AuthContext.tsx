@@ -39,7 +39,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const stored = getSession()
     if (!stored) return false
 
-    // Session already valid from localStorage – trust it
+    // Verify attendee still exists in DB (might have been deleted by organizer)
+    const attendee = await findAttendeeByCredentialId(stored.credentialId)
+    if (!attendee) {
+      clearSession()
+      setSessionState(null)
+      return false
+    }
+
     setSessionState(stored)
     return true
   }, [])
