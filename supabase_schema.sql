@@ -50,6 +50,7 @@ create table if not exists loop_rsvps (
   event_id           uuid not null references loop_events(id) on delete cascade,
   attendee_id        uuid not null references loop_attendees(id) on delete cascade,
   status             text not null check (status in ('going', 'not_going', 'maybe')),
+  plus_ones          integer not null default 0,
   is_late            boolean not null default false,
   late_note          text,
   food_pledge        text,

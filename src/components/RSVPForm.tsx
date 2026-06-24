@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { getMyRSVP, upsertRSVP, getEventRSVPs } from '../lib/db'
 import {
   CheckCircle2, XCircle, HelpCircle, Clock, Palette,
-  UtensilsCrossed, Loader2, AlertCircle, Save, Phone, Mail
+  UtensilsCrossed, Loader2, AlertCircle, Save, Phone, Mail, Users
 } from 'lucide-react'
 
 const FOOD_OPTIONS = [
@@ -31,6 +31,7 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
   const { session } = useAuth()
   const [myRSVP, setMyRSVP] = useState<RSVP | null>(null)
   const [status, setStatus] = useState<'going' | 'not_going' | 'maybe' | null>(null)
+  const [plusOnes, setPlusOnes] = useState(0)
   const [isLate, setIsLate] = useState(false)
   const [lateNote, setLateNote] = useState('')
   const [foodPledge, setFoodPledge] = useState('')
@@ -51,6 +52,7 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
     if (rsvp) {
       setMyRSVP(rsvp)
       setStatus(rsvp.status)
+      setPlusOnes(rsvp.plus_ones || 0)
       setIsLate(rsvp.is_late)
       setLateNote(rsvp.late_note || '')
       setFoodPledge(rsvp.food_pledge || '')
@@ -73,6 +75,7 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
       event_id: eventId,
       attendee_id: session.attendeeId,
       status,
+      plus_ones: plusOnes,
       is_late: isLate,
       late_note: isLate ? lateNote : undefined,
       food_pledge: finalFood || undefined,
@@ -91,7 +94,7 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
       onRSVPChange?.(all)
     }
     setSaving(false)
-  }, [session, status, eventId, isLate, lateNote, foodPledge, customFood, helpingWithDecor, contactNumber, email, onRSVPChange])
+  }, [session, status, eventId, plusOnes, isLate, lateNote, foodPledge, customFood, helpingWithDecor, contactNumber, email, onRSVPChange])
 
   if (loading) {
     return (
@@ -144,6 +147,28 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
       {showDetails && status !== 'not_going' && (
         <>
           <hr className="divider" style={{ margin: '0' }} />
+
+          {/* Plus ones */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <label className="input-label" htmlFor="input-plus-ones" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <Users size={14} color="var(--accent-purple)" />
+              Bringing anyone else? (+1s)
+            </label>
+            <select
+              id="input-plus-ones"
+              className="input"
+              value={plusOnes}
+              onChange={e => setPlusOnes(parseInt(e.target.value, 10))}
+              style={{ width: '100%', maxWidth: '200px' }}
+            >
+              <option value={0}>No, just me</option>
+              <option value={1}>+1 person</option>
+              <option value={2}>+2 people</option>
+              <option value={3}>+3 people</option>
+              <option value={4}>+4 people</option>
+              <option value={5}>+5 people</option>
+            </select>
+          </div>
 
           {/* Late arrival */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>

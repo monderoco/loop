@@ -32,6 +32,7 @@ export interface RSVP {
   event_id: string
   attendee_id: string
   status: 'going' | 'not_going' | 'maybe'
+  plus_ones: number
   is_late: boolean
   late_note?: string
   food_pledge?: string

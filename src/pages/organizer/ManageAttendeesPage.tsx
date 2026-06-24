@@ -93,7 +93,8 @@ export default function ManageAttendeesPage({ eventId }: ManageAttendeesPageProp
   }
 
   const filtered = rsvps.filter(r => filter === 'all' || r.status === filter)
-  const going = rsvps.filter(r => r.status === 'going').length
+  // Compute true headcount by adding plus_ones for 'going'
+  const going = rsvps.filter(r => r.status === 'going').reduce((sum, r) => sum + 1 + (r.plus_ones || 0), 0)
   const maybe = rsvps.filter(r => r.status === 'maybe').length
   const notGoing = rsvps.filter(r => r.status === 'not_going').length
   const food = rsvps.filter(r => r.food_pledge).length
@@ -287,6 +288,11 @@ export default function ManageAttendeesPage({ eventId }: ManageAttendeesPageProp
                           <div style={{ display: 'flex', flexDirection: 'column' }}>
                             <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>
                               {rsvp.attendee?.name || '—'}
+                              {rsvp.plus_ones > 0 && (
+                                <span style={{ marginLeft: '0.4rem', fontSize: '0.75rem', color: 'var(--accent-purple)', fontWeight: 700 }}>
+                                  (+{rsvp.plus_ones})
+                                </span>
+                              )}
                             </span>
                             {(rsvp.contact_number || rsvp.email) && (
                               <div style={{ display: 'flex', flexDirection: 'column', marginTop: '0.2rem' }}>

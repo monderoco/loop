@@ -48,7 +48,7 @@ export default function EventPage({ eventId }: EventPageProps) {
   useEffect(() => { loadEvent() }, [loadEvent])
   useEffect(() => { if (authed) loadRSVPs() }, [authed, loadRSVPs])
 
-  const going = rsvps.filter(r => r.status === 'going').length
+  const going = rsvps.filter(r => r.status === 'going').reduce((sum, r) => sum + 1 + (r.plus_ones || 0), 0)
   const maybe = rsvps.filter(r => r.status === 'maybe').length
   const decor = rsvps.filter(r => r.helping_with_decor).length
   const food = rsvps.filter(r => r.food_pledge).length
