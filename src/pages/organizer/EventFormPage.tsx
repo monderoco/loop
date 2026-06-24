@@ -64,6 +64,7 @@ export default function EventFormPage({ eventId }: EventFormPageProps) {
         setContacts([{ name: organizer?.name || '', email: '', phone: '', is_main: true }])
       }
     }
+    setLoading(false)
   }, [eventId, organizer])
 
   useEffect(() => { loadEvent() }, [loadEvent])
