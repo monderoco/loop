@@ -998,3 +998,7 @@ textarea.input {
   letter-spacing: -0.02em;
 }
 
+
+.stat-btn { background: transparent; border: none; cursor: pointer; transition: background 0.2s, transform 0.1s; text-align: center; }
+.stat-btn:hover { background: rgba(255, 255, 255, 0.03); transform: scale(1.02); }
+.stat-btn:active { transform: scale(0.98); }

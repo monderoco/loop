@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { getEventRSVPs } from '../lib/db'
 import { useAuth } from '../context/AuthContext'
 import { format } from 'date-fns'
-import { MapPin, Calendar, Clock, Users, UtensilsCrossed, Palette, Gamepad2 } from 'lucide-react'
+import { MapPin, Calendar, Clock, Users, UtensilsCrossed, Palette, Gamepad2, X } from 'lucide-react'
 import Markdown from '../components/Markdown'
 import RSVPForm from '../components/RSVPForm'
 import AttendeeList from '../components/AttendeeList'
@@ -14,16 +14,14 @@ interface EventPageProps {
   eventId: string
 }
 
-type ActiveTab = 'details' | 'guests'
-
 export default function EventPage({ eventId }: EventPageProps) {
   const { session } = useAuth()
   const [event, setEvent] = useState<Event | null>(null)
   const [rsvps, setRsvps] = useState<RSVP[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<ActiveTab>('details')
-  const [showGate, setShowGate] = useState(false)
   const [authed, setAuthed] = useState(!!session)
+  const [showGate, setShowGate] = useState(false)
+  const [activeModal, setActiveModal] = useState<'going' | 'food' | 'decor' | 'activity' | null>(null)
 
   const loadEvent = useCallback(async () => {
     // If eventId looks like a UUID, match by id or slug. Otherwise, match by slug.
@@ -50,9 +48,9 @@ export default function EventPage({ eventId }: EventPageProps) {
 
   const going = rsvps.filter(r => r.status === 'going').reduce((sum, r) => sum + 1 + (r.plus_ones || 0), 0)
   const maybe = rsvps.filter(r => r.status === 'maybe').length
-  const decor = rsvps.filter(r => r.helping_with_decor).length
-  const food = rsvps.filter(r => r.food_pledge).length
-  const activity = rsvps.filter(r => r.host_activity).length
+  const decorCount = rsvps.filter(r => r.helping_with_decor).length
+  const foodCount = rsvps.reduce((sum, r) => sum + (r.food_pledge ? r.food_pledge.split(',').filter(x => x.trim()).length : 0), 0)
+  const activityCount = rsvps.reduce((sum, r) => sum + (r.host_activity ? r.host_activity.split(',').filter(x => x.trim()).length : 0), 0)
 
   if (loading) {
     return (
@@ -134,188 +132,165 @@ export default function EventPage({ eventId }: EventPageProps) {
         {/* ── Stats bar ── */}
         {rsvps.length > 0 && (
           <div className="stats-bar fade-in fade-in--delay-1" style={{ marginBottom: '2rem' }}>
-            <div className="stat-cell">
+            <button className="stat-cell stat-btn" onClick={() => setActiveModal('going')}>
               <div className="stat-number" style={{ color: 'var(--accent-emerald)' }}>{going}</div>
               <div className="stat-cell__label">Going</div>
-            </div>
-            {food > 0 && (
-              <div className="stat-cell">
-                <div className="stat-number" style={{ color: '#fdba74' }}>{food}</div>
+            </button>
+            {foodCount > 0 && (
+              <button className="stat-cell stat-btn" onClick={() => setActiveModal('food')}>
+                <div className="stat-number" style={{ color: '#fdba74' }}>{foodCount}</div>
                 <div className="stat-cell__label">Food pledges</div>
-              </div>
+              </button>
             )}
-            {decor > 0 && (
-              <div className="stat-cell">
-                <div className="stat-number" style={{ color: 'var(--text-accent)' }}>{decor}</div>
+            {decorCount > 0 && (
+              <button className="stat-cell stat-btn" onClick={() => setActiveModal('decor')}>
+                <div className="stat-number" style={{ color: 'var(--text-accent)' }}>{decorCount}</div>
                 <div className="stat-cell__label">Decor helpers</div>
-              </div>
+              </button>
             )}
-            {activity > 0 && (
-              <div className="stat-cell">
-                <div className="stat-number" style={{ color: 'var(--accent-amber)' }}>{activity}</div>
+            {activityCount > 0 && (
+              <button className="stat-cell stat-btn" onClick={() => setActiveModal('activity')}>
+                <div className="stat-number" style={{ color: 'var(--accent-amber)' }}>{activityCount}</div>
                 <div className="stat-cell__label">Activities</div>
-              </div>
+              </button>
             )}
           </div>
         )}
 
-        {/* ── Tabs ── */}
-        <div className="tabs fade-in fade-in--delay-1">
-          <button
-            id="tab-details"
-            className={`tab ${activeTab === 'details' ? 'active' : ''}`}
-            onClick={() => setActiveTab('details')}
-          >
-            Event Details
-          </button>
-          <button
-            id="tab-guests"
-            className={`tab ${activeTab === 'guests' ? 'active' : ''}`}
-            onClick={() => setActiveTab('guests')}
-          >
-            Guests ({going})
-          </button>
-        </div>
-
-        {/* ── Details tab ── */}
-        {activeTab === 'details' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-
-            {/* Description card */}
-            <div className="card fade-in">
-              <Markdown content={event.description} />
-            </div>
-
-            {/* RSVP section */}
-            {event.status !== 'cancelled' && (
-              authed ? (
-                <RSVPForm
-                  eventId={event.id}
-                  onRSVPChange={setRsvps}
-                  allRsvps={rsvps}
-                />
-              ) : (
-              <div
-                className="card fade-in"
-                style={{
-                  textAlign: 'center',
-                  padding: '2.5rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '1rem',
-                  borderStyle: 'dashed',
-                  borderColor: 'rgba(139,92,246,0.3)',
-                  background: 'rgba(139,92,246,0.04)',
-                }}
-              >
-                <div style={{ fontSize: '2.5rem' }}>🎟️</div>
-                <div>
-                  <p style={{ fontWeight: 700, fontSize: '1.05rem', marginBottom: '0.35rem' }}>
-                    Ready to RSVP?
-                  </p>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '320px' }}>
-                    It only takes a second. We'll save your response with a passkey — no account needed.
-                  </p>
-                </div>
-                <button
-                  id="btn-rsvp-cta"
-                  className="btn btn-primary btn-lg"
-                  onClick={() => setShowGate(true)}
-                >
-                  RSVP to this event
-                </button>
-              </div>
-            ))}
-
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Description card */}
+          <div className="card fade-in">
+            <Markdown content={event.description} />
           </div>
-        )}
 
-        {/* ── Guests tab ── */}
-        {activeTab === 'guests' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <div className="card fade-in">
-              <AttendeeList
-                rsvps={rsvps}
-                myAttendeeId={session?.attendeeId}
+          {/* RSVP section */}
+          {event.status !== 'cancelled' && (
+            authed ? (
+              <RSVPForm
+                eventId={event.id}
+                onRSVPChange={setRsvps}
+                allRsvps={rsvps}
               />
-            </div>
-
-            {/* Food, Decor & Activities summary (if there are pledges) */}
-            {(food > 0 || decor > 0 || activity > 0) && (
-              <div
-                className="card fade-in"
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap: '1.5rem',
-                }}
-              >
-                {food > 0 && (
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                      <UtensilsCrossed size={15} color="var(--accent-amber)" />
-                      <span className="section-heading" style={{ margin: 0 }}>Food pledges</span>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      {rsvps
-                        .filter(r => r.food_pledge)
-                        .map(r => {
-                          const pledges = r.food_pledge!.split(',').map(p => p.trim()).filter(Boolean);
-                          return (
-                            <div key={r.id} style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                              <div style={{ color: 'var(--text-primary)', fontWeight: 600, marginBottom: '0.2rem' }}>{r.attendee?.name}</div>
-                              <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
-                                {pledges.map((p, i) => (
-                                  <span key={i} className="badge badge-food" style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem' }}>{p}</span>
-                                ))}
-                              </div>
-                            </div>
-                          )
-                        })}
-                    </div>
-                  </div>
-                )}
-                {decor > 0 && (
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                      <Palette size={15} color="var(--accent-purple)" />
-                      <span className="section-heading" style={{ margin: 0 }}>Decor helpers</span>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                      {rsvps
-                        .filter(r => r.helping_with_decor)
-                        .map(r => (
-                          <div key={r.id} style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                            <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{r.attendee?.name}</span>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                )}
-                {activity > 0 && (
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                      <Gamepad2 size={15} color="var(--accent-amber)" />
-                      <span className="section-heading" style={{ margin: 0 }}>Activities</span>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      {rsvps
-                        .filter(r => r.host_activity)
-                        .map(r => (
-                          <div key={r.id} style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                            <div style={{ color: 'var(--text-primary)', fontWeight: 600, marginBottom: '0.2rem' }}>{r.attendee?.name}</div>
-                            <span className="badge" style={{ background: 'rgba(245,158,11,0.1)', color: '#d97706', border: '1px solid rgba(245,158,11,0.2)', fontSize: '0.7rem', padding: '0.15rem 0.4rem' }}>{r.host_activity}</span>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                )}
+            ) : (
+            <div
+              className="card fade-in"
+              style={{
+                textAlign: 'center',
+                padding: '2.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '1rem',
+                borderStyle: 'dashed',
+                borderColor: 'rgba(139,92,246,0.3)',
+                background: 'rgba(139,92,246,0.04)',
+              }}
+            >
+              <div style={{ fontSize: '2.5rem' }}>🎟️</div>
+              <div>
+                <p style={{ fontWeight: 700, fontSize: '1.05rem', marginBottom: '0.35rem' }}>
+                  Ready to RSVP?
+                </p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '320px' }}>
+                  It only takes a second. We'll save your response with a passkey — no account needed.
+                </p>
               </div>
-            )}
-          </div>
-        )}
+              <button
+                id="btn-rsvp-cta"
+                className="btn btn-primary btn-lg"
+                onClick={() => setShowGate(true)}
+              >
+                RSVP to this event
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
+
+      {/* ── Modals ── */}
+      {activeModal && (
+        <div className="modal-overlay" onClick={() => setActiveModal(null)}>
+          <div className="modal-content fade-in" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px', maxHeight: '85vh', overflowY: 'auto' }}>
+            <div className="modal-header">
+              <h2 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {activeModal === 'going' && <><Users size={18} color="var(--accent-emerald)" /> Guest List</>}
+                {activeModal === 'food' && <><UtensilsCrossed size={18} color="#fdba74" /> Food Pledges</>}
+                {activeModal === 'decor' && <><Palette size={18} color="var(--text-accent)" /> Decor Helpers</>}
+                {activeModal === 'activity' && <><Gamepad2 size={18} color="var(--accent-amber)" /> Activities</>}
+              </h2>
+              <button className="btn btn-ghost btn-sm" onClick={() => setActiveModal(null)} style={{ padding: '0.25rem' }}>
+                <X size={16} />
+              </button>
+            </div>
+            <div style={{ padding: '1.25rem' }}>
+              {activeModal === 'going' && (
+                <AttendeeList rsvps={rsvps} myAttendeeId={session?.attendeeId} />
+              )}
+              
+              {activeModal === 'food' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {rsvps.filter(r => r.food_pledge).length === 0 ? (
+                    <p style={{ color: 'var(--text-muted)' }}>No food pledges yet.</p>
+                  ) : (
+                    rsvps.filter(r => r.food_pledge).map(r => {
+                      const pledges = r.food_pledge!.split(',').map(p => p.trim()).filter(Boolean);
+                      return (
+                        <div key={r.id} style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)' }}>
+                          <div style={{ color: 'var(--text-primary)', fontWeight: 600, marginBottom: '0.4rem' }}>{r.attendee?.name}</div>
+                          <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                            {pledges.map((p, i) => (
+                              <span key={i} className="badge badge-food" style={{ fontSize: '0.8rem', padding: '0.2rem 0.6rem' }}>{p}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+              )}
+
+              {activeModal === 'decor' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {rsvps.filter(r => r.helping_with_decor).length === 0 ? (
+                    <p style={{ color: 'var(--text-muted)' }}>No decor helpers yet.</p>
+                  ) : (
+                    rsvps.filter(r => r.helping_with_decor).map(r => (
+                      <div key={r.id} style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border)' }}>
+                        <div className="avatar" style={{ width: '1.5rem', height: '1.5rem', fontSize: '0.6rem' }}>
+                          {r.attendee?.name.slice(0, 2).toUpperCase()}
+                        </div>
+                        {r.attendee?.name}
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {activeModal === 'activity' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {rsvps.filter(r => r.host_activity).length === 0 ? (
+                    <p style={{ color: 'var(--text-muted)' }}>No activities planned yet.</p>
+                  ) : (
+                    rsvps.filter(r => r.host_activity).map(r => {
+                      const activities = r.host_activity!.split(',').map(a => a.trim()).filter(Boolean);
+                      return (
+                        <div key={r.id} style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)' }}>
+                          <div style={{ color: 'var(--text-primary)', fontWeight: 600, marginBottom: '0.4rem' }}>{r.attendee?.name}</div>
+                          <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                            {activities.map((a, i) => (
+                              <span key={i} className="badge" style={{ background: 'rgba(245,158,11,0.1)', color: '#d97706', border: '1px solid rgba(245,158,11,0.2)', fontSize: '0.8rem', padding: '0.2rem 0.6rem' }}>{a}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
