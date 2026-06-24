@@ -98,8 +98,26 @@ export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPF
       setPlusOnes(rsvp.plus_ones || 0)
       setIsLate(rsvp.is_late)
       setLateNote(rsvp.late_note || '')
-      setFoodPledge(rsvp.food_pledge || '')
-      setEquipmentPledge(rsvp.equipment_pledge || '')
+      const standardFoodOptions = FOOD_OPTIONS.map(opt => `${opt.emoji} ${opt.label}`);
+      const allFood = rsvp.food_pledge ? rsvp.food_pledge.split(',').map(s => s.trim()).filter(Boolean) : [];
+      const standardFood = allFood.filter(f => standardFoodOptions.includes(f));
+      const customFoodItems = allFood.filter(f => !standardFoodOptions.includes(f));
+      if (customFoodItems.length > 0) {
+        standardFood.push('✏️ Other (describe)');
+        setCustomFood(customFoodItems.join(', '));
+      }
+      setFoodPledge(standardFood.join(', '))
+
+      const standardEquipOptions = EQUIPMENT_OPTIONS.map(opt => `${opt.emoji} ${opt.label}`);
+      const allEquip = rsvp.equipment_pledge ? rsvp.equipment_pledge.split(',').map(s => s.trim()).filter(Boolean) : [];
+      const standardEquip = allEquip.filter(e => standardEquipOptions.includes(e));
+      const customEquipItems = allEquip.filter(e => !standardEquipOptions.includes(e));
+      if (customEquipItems.length > 0) {
+        standardEquip.push('✏️ Other (describe)');
+        setCustomEquipment(customEquipItems.join(', '));
+      }
+      setEquipmentPledge(standardEquip.join(', '))
+
       setHelpingWithDecor(rsvp.helping_with_decor)
       setContactNumber(rsvp.contact_number || '')
       setEmail(rsvp.email || '')
@@ -118,8 +136,19 @@ export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPF
     if (!session || !status) return
     setSaving(true)
     setError(null)
-    const finalFood = foodPledge === '✏️ Other (describe)' ? customFood : foodPledge
-    const finalEquipment = equipmentPledge === '✏️ Other (describe)' ? customEquipment : equipmentPledge
+    let finalFoodList = foodPledge ? foodPledge.split(',').map(s => s.trim()).filter(Boolean) : []
+    if (finalFoodList.includes('✏️ Other (describe)')) {
+      finalFoodList = finalFoodList.filter(s => s !== '✏️ Other (describe)')
+      if (customFood) finalFoodList.push(customFood)
+    }
+    const finalFood = finalFoodList.join(', ')
+
+    let finalEquipmentList = equipmentPledge ? equipmentPledge.split(',').map(s => s.trim()).filter(Boolean) : []
+    if (finalEquipmentList.includes('✏️ Other (describe)')) {
+      finalEquipmentList = finalEquipmentList.filter(s => s !== '✏️ Other (describe)')
+      if (customEquipment) finalEquipmentList.push(customEquipment)
+    }
+    const finalEquipment = finalEquipmentList.join(', ')
     const result = await upsertRSVP({
       event_id: eventId,
       attendee_id: session.attendeeId,
@@ -158,23 +187,33 @@ export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPF
     )
   }
 
-  const currentFood = foodPledge === '✏️ Other (describe)' ? customFood : foodPledge;
-  const currentFoodItems = currentFood.split(',').map(f => f.trim()).filter(Boolean);
+  const currentFood = foodPledge;
+  const currentFoodItems = currentFood ? currentFood.split(',').map(f => f.trim()).filter(Boolean) : [];
   
   const othersBringingFood = allRsvps.filter(r => {
     if (r.status !== 'going' || r.attendee_id === session?.attendeeId || !r.food_pledge) return false;
     const theirItems = r.food_pledge.split(',').map(f => f.trim().toLowerCase());
-    return currentFoodItems.some(item => theirItems.includes(item.toLowerCase()));
+    return currentFoodItems.some(item => item !== '✏️ Other (describe)' && theirItems.includes(item.toLowerCase()));
   }).length;
 
-  const currentEquipment = equipmentPledge === '✏️ Other (describe)' ? customEquipment : equipmentPledge;
-  const currentEquipmentItems = currentEquipment.split(',').map(e => e.trim()).filter(Boolean);
+  const currentEquipment = equipmentPledge;
+  const currentEquipmentItems = currentEquipment ? currentEquipment.split(',').map(e => e.trim()).filter(Boolean) : [];
 
   const othersBringingEquipment = allRsvps.filter(r => {
     if (r.status !== 'going' || r.attendee_id === session?.attendeeId || !r.equipment_pledge) return false;
     const theirItems = r.equipment_pledge.split(',').map(e => e.trim().toLowerCase());
-    return currentEquipmentItems.some(item => theirItems.includes(item.toLowerCase()));
+    return currentEquipmentItems.some(item => item !== '✏️ Other (describe)' && theirItems.includes(item.toLowerCase()));
   }).length;
+
+  const toggleListItem = (currentList: string, item: string) => {
+    let items = currentList ? currentList.split(',').map(s => s.trim()).filter(Boolean) : [];
+    if (items.includes(item)) {
+      items = items.filter(i => i !== item);
+    } else {
+      items.push(item);
+    }
+    return items.join(', ');
+  }
 
   return (
     <div className="card fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -318,8 +357,8 @@ export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPF
                   <button
                     key={opt.label}
                     type="button"
-                    className={`food-chip ${foodPledge === val ? 'selected' : ''}`}
-                    onClick={() => setFoodPledge(foodPledge === val ? '' : val)}
+                    className={`food-chip ${currentFoodItems.includes(val) ? 'selected' : ''}`}
+                    onClick={() => setFoodPledge(toggleListItem(foodPledge, val))}
                     id={`food-${opt.label.toLowerCase().replace(/\s+/g, '-')}`}
                   >
                     <span className="food-chip__emoji">{opt.emoji}</span>
@@ -329,7 +368,7 @@ export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPF
               })}
             </div>
 
-            {foodPledge === '✏️ Other (describe)' && (
+            {currentFoodItems.includes('✏️ Other (describe)') && (
               <input
                 id="input-custom-food"
                 className="input"
@@ -368,8 +407,8 @@ export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPF
                   <button
                     key={opt.label}
                     type="button"
-                    className={`food-chip ${equipmentPledge === val ? 'selected' : ''}`}
-                    onClick={() => setEquipmentPledge(equipmentPledge === val ? '' : val)}
+                    className={`food-chip ${currentEquipmentItems.includes(val) ? 'selected' : ''}`}
+                    onClick={() => setEquipmentPledge(toggleListItem(equipmentPledge, val))}
                     id={`equipment-${opt.label.toLowerCase().replace(/\s+/g, '-')}`}
                   >
                     <span className="food-chip__emoji">{opt.emoji}</span>
@@ -379,7 +418,7 @@ export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPF
               })}
             </div>
 
-            {equipmentPledge === '✏️ Other (describe)' && (
+            {currentEquipmentItems.includes('✏️ Other (describe)') && (
               <input
                 id="input-custom-equipment"
                 className="input"
