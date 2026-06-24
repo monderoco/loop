@@ -16,6 +16,7 @@ create table if not exists loop_events (
   event_date      timestamptz not null,
   cover_image_url text,
   video_url       text,
+  contacts        jsonb default '[]'::jsonb,
   organizer_id    uuid,  -- references auth.users, set below
   status          text not null default 'active' check (status in ('active', 'cancelled')),
   created_at      timestamptz not null default now(),

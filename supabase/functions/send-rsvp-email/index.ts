@@ -27,7 +27,7 @@ serve(async (req) => {
     // Fetch RSVP details
     const { data: rsvpData, error: rsvpError } = await supabase
       .from("loop_rsvps")
-      .select("status, plus_ones, host_activity, attendee:loop_attendees(name), event:loop_events(id, slug, title, event_date, location, organizer_id)")
+      .select("status, plus_ones, host_activity, attendee:loop_attendees(name), event:loop_events(id, slug, title, event_date, location, organizer_id, contacts)")
       .eq("id", record.rsvp_id)
       .single();
 
@@ -118,20 +118,27 @@ serve(async (req) => {
       console.log(`Successfully sent ${status} email to guest ${record.email}`);
     }
 
-    // 2. Send notification to the Organizer
-    if (event.organizer_id) {
+    // 2. Send notification to the Organizer(s)
+    if (event.organizer_id || (event.contacts && event.contacts.length > 0)) {
       // Small delay to prevent Resend rate limits (2 per second on free tier)
       await new Promise(r => setTimeout(r, 1000));
       
       try {
-        const { data: userData, error: userError } = await supabase.auth.admin.getUserById(event.organizer_id);
-        const organizerEmail = userData?.user?.email;
-        
-        if (userError) {
-          console.error("Failed to fetch organizer from auth.users:", userError);
+        let contactEmails: string[] = (event.contacts || [])
+          .map((c: any) => c.email)
+          .filter((e: any) => e && typeof e === 'string' && e.trim() !== '');
+
+        if (contactEmails.length === 0 && event.organizer_id) {
+          const { data: userData, error: userError } = await supabase.auth.admin.getUserById(event.organizer_id);
+          if (userError) {
+            console.error("Failed to fetch organizer from auth.users:", userError);
+          }
+          if (userData?.user?.email) {
+            contactEmails.push(userData.user.email);
+          }
         }
         
-        if (organizerEmail) {
+        if (contactEmails.length > 0) {
           const plusOneText = plus_ones > 0 ? ` + ${plus_ones}` : "";
           const hostActivityHtml = host_activity ? `<p style="margin: 0 0 8px;"><strong>Hosting:</strong> ${host_activity}</p>` : "";
           const plusOnesDataHtml = record.plus_ones_data?.length ? `<div style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 10px;"><p style="margin: 0 0 8px; font-weight: bold;">+1 Details:</p>${record.plus_ones_data.map((p:any) => `<p style="margin: 0 0 4px; font-size: 14px;">- ${p.name || 'Unnamed'} ${p.phone ? `📞 ${p.phone}` : ''} ${p.email ? `✉️ ${p.email}` : ''}</p>`).join('')}</div>` : "";
@@ -159,17 +166,17 @@ serve(async (req) => {
               "Authorization": `Bearer ${resendApiKey}`
             },
             body: JSON.stringify({
-              from: "Loop Notifications <loop@mondero.nz>",
-              to: [organizerEmail],
+              from: "Loop Events <rsvp@mondero.nz>",
+              to: contactEmails,
               subject: orgSubject,
-              html: orgHtml
-            })
+              html: orgHtml,
+            }),
           });
 
           if (!orgRes.ok) {
             console.error("Resend API Error (Organizer):", await orgRes.text());
           } else {
-            console.log(`Successfully notified organizer ${organizerEmail}`);
+            console.log(`Successfully notified organizer ${contactEmails.join(', ')}`);
           }
         }
       } catch (orgErr) {

@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useOrganizer } from '../../context/OrganizerContext'
 import { getEvent, createEvent, updateEvent, notifyEventUpdate } from '../../lib/db'
-import type { Event } from '../../types'
+import type { Event, EventContact } from '../../types'
 import { format } from 'date-fns'
 import {
   ArrowLeft, Save, Eye, EyeOff, Calendar, MapPin,
-  FileText, Loader2, AlertCircle, CheckCircle2
+  FileText, Loader2, AlertCircle, CheckCircle2, User, Plus, Trash2
 } from 'lucide-react'
 import Markdown from '../../components/Markdown'
 
@@ -39,6 +39,7 @@ export default function EventFormPage({ eventId }: EventFormPageProps) {
   const [previewMd, setPreviewMd] = useState(false)
   const [updateMessage, setUpdateMessage] = useState('')
   const [cancelling, setCancelling] = useState(false)
+  const [contacts, setContacts] = useState<EventContact[]>([])
 
   const loadEvent = useCallback(async () => {
     if (!eventId) return
@@ -57,11 +58,21 @@ export default function EventFormPage({ eventId }: EventFormPageProps) {
         video_url: event.video_url || '',
         status: event.status || 'active',
       })
+      if (event.contacts && event.contacts.length > 0) {
+        setContacts(event.contacts)
+      } else {
+        setContacts([{ name: organizer?.name || '', email: '', phone: '', is_main: true }])
+      }
     }
-    setLoading(false)
-  }, [eventId])
+  }, [eventId, organizer])
 
   useEffect(() => { loadEvent() }, [loadEvent])
+
+  useEffect(() => {
+    if (!eventId && organizer && contacts.length === 0) {
+      setContacts([{ name: organizer.name || '', email: '', phone: '', is_main: true }])
+    }
+  }, [eventId, organizer, contacts])
 
   function setField(field: keyof typeof BLANK_FORM, value: string) {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -89,6 +100,7 @@ export default function EventFormPage({ eventId }: EventFormPageProps) {
       cover_image_url: form.cover_image_url || undefined,
       video_url: form.video_url || undefined,
       organizer_id: organizer!.id,
+      contacts: contacts,
     }
 
     let result: Event | null = null
@@ -278,6 +290,94 @@ export default function EventFormPage({ eventId }: EventFormPageProps) {
               maxLength={200}
             />
           </div>
+        </div>
+
+        {/* Contacts */}
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <p className="section-heading" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <User size={15} color="var(--accent-cyan)" />
+            Hosts & Contacts
+          </p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '-0.5rem' }}>
+            These details will be included in the RSVP confirmation emails.
+          </p>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {contacts.map((contact, idx) => (
+              <div key={idx} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', paddingBottom: '1rem', borderBottom: idx < contacts.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div className="input-group">
+                    <label className="input-label">Name *</label>
+                    <input
+                      className="input input-sm"
+                      type="text"
+                      placeholder="Jane Doe"
+                      value={contact.name}
+                      onChange={e => {
+                        const newContacts = [...contacts]
+                        newContacts[idx].name = e.target.value
+                        setContacts(newContacts)
+                      }}
+                      required
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <div className="input-group" style={{ flex: 1 }}>
+                      <label className="input-label">Email</label>
+                      <input
+                        className="input input-sm"
+                        type="email"
+                        placeholder="jane@example.com"
+                        value={contact.email || ''}
+                        onChange={e => {
+                          const newContacts = [...contacts]
+                          newContacts[idx].email = e.target.value
+                          setContacts(newContacts)
+                        }}
+                      />
+                    </div>
+                    <div className="input-group" style={{ flex: 1 }}>
+                      <label className="input-label">Phone</label>
+                      <input
+                        className="input input-sm"
+                        type="tel"
+                        placeholder="+64 21 000 000"
+                        value={contact.phone || ''}
+                        onChange={e => {
+                          const newContacts = [...contacts]
+                          newContacts[idx].phone = e.target.value
+                          setContacts(newContacts)
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                {contacts.length > 1 && (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    style={{ color: 'var(--accent-rose)', padding: '0.4rem', marginTop: '1.5rem' }}
+                    onClick={() => {
+                      const newContacts = [...contacts]
+                      newContacts.splice(idx, 1)
+                      setContacts(newContacts)
+                    }}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            style={{ alignSelf: 'flex-start' }}
+            onClick={() => setContacts([...contacts, { name: '', email: '', phone: '', is_main: false }])}
+          >
+            <Plus size={14} /> Add another contact
+          </button>
         </div>
 
         {/* Description (markdown) */}

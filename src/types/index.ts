@@ -10,8 +10,16 @@ export interface Event {
   organizer_id?: string
   organizer?: Organizer
   status?: 'active' | 'cancelled'
+  contacts?: EventContact[]
   created_at: string
   updated_at: string
+}
+
+export interface EventContact {
+  name: string
+  email?: string
+  phone?: string
+  is_main?: boolean
 }
 
 export interface Organizer {

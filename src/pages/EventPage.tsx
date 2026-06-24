@@ -163,6 +163,27 @@ export default function EventPage({ eventId }: EventPageProps) {
             <Markdown content={event.description} />
           </div>
 
+          {/* Contacts card */}
+          {event.contacts && event.contacts.length > 0 && (
+            <div className="card fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: 'var(--surface-sunken)' }}>
+              <p className="section-heading" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Users size={15} color="var(--accent-cyan)" />
+                Hosted by
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {event.contacts.map((contact, idx) => (
+                  <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                    <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{contact.name}</div>
+                    <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                      {contact.email && <div><a href={`mailto:${contact.email}`} style={{ color: 'inherit', textDecoration: 'underline' }}>{contact.email}</a></div>}
+                      {contact.phone && <div><a href={`tel:${contact.phone}`} style={{ color: 'inherit', textDecoration: 'underline' }}>{contact.phone}</a></div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* RSVP section */}
           {event.status !== 'cancelled' && (
             authed ? (
