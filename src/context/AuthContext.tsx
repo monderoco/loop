@@ -26,13 +26,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [passkeySupported, setPasskeySupported] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    isPlatformAuthenticatorAvailable().then(setPasskeySupported)
-    const stored = getSession()
-    setSessionState(stored)
-    setIsLoading(false)
-  }, [])
-
   const clearError = useCallback(() => setError(null), [])
 
   const tryAutoAuth = useCallback(async (): Promise<boolean> => {
@@ -50,6 +43,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSessionState(stored)
     return true
   }, [])
+
+  useEffect(() => {
+    isPlatformAuthenticatorAvailable().then(setPasskeySupported)
+    tryAutoAuth().then(() => {
+      setIsLoading(false)
+    })
+  }, [tryAutoAuth])
 
   const register = useCallback(async (name: string): Promise<void> => {
     setIsLoading(true)
