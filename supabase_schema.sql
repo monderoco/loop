@@ -10,6 +10,7 @@ create extension if not exists pg_trgm;
 create table if not exists loop_events (
   id              uuid primary key default gen_random_uuid(),
   title           text not null,
+  slug            text unique,
   description     text not null default '',  -- markdown
   location        text not null default '',
   event_date      timestamptz not null,

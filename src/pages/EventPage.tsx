@@ -26,7 +26,13 @@ export default function EventPage({ eventId }: EventPageProps) {
   const [authed, setAuthed] = useState(!!session)
 
   const loadEvent = useCallback(async () => {
-    const { data, error } = await supabase.from('loop_events').select('*').eq('id', eventId).single()
+    // If eventId looks like a UUID, match by id or slug. Otherwise, match by slug.
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(eventId);
+    const query = supabase.from('loop_events').select('*');
+    const { data, error } = await (isUuid 
+      ? query.eq('id', eventId).single() 
+      : query.eq('slug', eventId).single());
+
     if (data) {
       setEvent(data)
     }
@@ -34,9 +40,10 @@ export default function EventPage({ eventId }: EventPageProps) {
   }, [eventId])
 
   const loadRSVPs = useCallback(async () => {
-    const all = await getEventRSVPs(eventId)
+    if (!event?.id) return;
+    const all = await getEventRSVPs(event.id)
     setRsvps(all)
-  }, [eventId])
+  }, [event?.id])
 
   useEffect(() => { loadEvent() }, [loadEvent])
   useEffect(() => { if (authed) loadRSVPs() }, [authed, loadRSVPs])

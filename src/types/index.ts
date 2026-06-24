@@ -1,6 +1,7 @@
 export interface Event {
   id: string
   title: string
+  slug?: string
   description: string // markdown
   location: string
   event_date: string  // ISO datetime

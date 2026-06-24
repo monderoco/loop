@@ -17,6 +17,7 @@ interface EventFormPageProps {
 
 const BLANK_FORM = {
   title: '',
+  slug: '',
   description: '',
   location: '',
   event_date: '',
@@ -44,6 +45,7 @@ export default function EventFormPage({ eventId }: EventFormPageProps) {
       const dt = new Date(event.event_date)
       setForm({
         title: event.title,
+        slug: event.slug || '',
         description: event.description,
         location: event.location,
         event_date: format(dt, 'yyyy-MM-dd'),
@@ -76,6 +78,7 @@ export default function EventFormPage({ eventId }: EventFormPageProps) {
 
     const payload = {
       title: form.title.trim(),
+      slug: form.slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-') || undefined,
       description: form.description,
       location: form.location.trim(),
       event_date: dateTime.toISOString(),
@@ -165,6 +168,25 @@ export default function EventFormPage({ eventId }: EventFormPageProps) {
               maxLength={120}
               autoFocus={!isEdit}
             />
+          </div>
+
+          <div className="input-group">
+            <label className="input-label" htmlFor="input-event-slug">URL slug (optional)</label>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span style={{ padding: '0.65rem 0.5rem 0.65rem 0.8rem', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRight: 'none', borderRadius: 'var(--radius-md) 0 0 var(--radius-md)', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                loop.mondero.nz/#/event/
+              </span>
+              <input
+                id="input-event-slug"
+                className="input"
+                type="text"
+                placeholder="summer-party"
+                value={form.slug}
+                onChange={e => setField('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
+                maxLength={60}
+                style={{ borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
+              />
+            </div>
           </div>
 
           {/* Date + Time */}
