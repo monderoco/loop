@@ -93,7 +93,7 @@ serve(async (req) => {
         "Authorization": `Bearer ${resendApiKey}`
       },
       body: JSON.stringify({
-        from: "Loop Events <hello@loop.mondero.nz>",
+        from: "Loop Events <loop@mondero.nz>",
         to: [record.email],
         subject: subject,
         html: htmlContent
@@ -142,7 +142,7 @@ serve(async (req) => {
               "Authorization": `Bearer ${resendApiKey}`
             },
             body: JSON.stringify({
-              from: "Loop Notifications <hello@loop.mondero.nz>",
+              from: "Loop Notifications <loop@mondero.nz>",
               to: [organizerEmail],
               subject: orgSubject,
               html: orgHtml
