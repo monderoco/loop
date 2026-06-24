@@ -8,8 +8,7 @@ import {
   FileText, Loader2, AlertCircle, CheckCircle2, User, Plus, Trash2
 } from 'lucide-react'
 import Markdown from '../../components/Markdown'
-
-function navigate(hash: string) { window.location.hash = hash }
+import { navigate } from '../../lib/router'
 
 interface EventFormPageProps {
   eventId?: string  // undefined = create mode

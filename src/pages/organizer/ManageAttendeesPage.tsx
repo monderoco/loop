@@ -7,8 +7,7 @@ import {
   X, AlertCircle, Copy, Check,
   Users, Palette, Clock, Pencil, Loader2, HelpCircle, XCircle, Gamepad2
 } from 'lucide-react'
-
-function navigate(hash: string) { window.location.hash = hash }
+import { navigate } from '../../lib/router'
 
 interface ManageAttendeesPageProps {
   eventId: string

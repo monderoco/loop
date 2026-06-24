@@ -1,6 +1,7 @@
 import { useAuth } from '../context/AuthContext'
 import { Fingerprint, LogOut, Settings } from 'lucide-react'
 import LoopIcon from '../assets/loop-icon.svg'
+import { navigate } from '../lib/router'
 
 export default function Header() {
   const { session, signOut } = useAuth()
@@ -8,7 +9,7 @@ export default function Header() {
   return (
     <header className="app-header">
       <div className="app-header__inner">
-        <a href="#/" className="app-header__logo" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+        <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }} className="app-header__logo" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
           <img src={LoopIcon} alt="Loop Icon" style={{ width: '1.2rem', height: '1.2rem' }} />
           Loop
         </a>
@@ -57,7 +58,8 @@ export default function Header() {
                 <span>Passkey secured</span>
               </div>
               <a
-                href="#/organizer"
+                href="/organizer"
+                onClick={(e) => { e.preventDefault(); navigate('/organizer') }}
                 className="btn btn-ghost btn-sm"
                 title="Organiser sign in"
                 id="btn-organizer-link"

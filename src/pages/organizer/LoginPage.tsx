@@ -1,5 +1,6 @@
 import { useOrganizer } from '../../context/OrganizerContext'
 import { Fingerprint, AlertCircle, ArrowLeft } from 'lucide-react'
+import { navigate } from '../../lib/router'
 
 export default function OrganizerLoginPage() {
   const { signInWithGoogle, error } = useOrganizer()
@@ -17,7 +18,8 @@ export default function OrganizerLoginPage() {
       <div style={{ width: '100%', maxWidth: '420px' }}>
         {/* Back link */}
         <a
-          href="#/"
+          href="/"
+          onClick={(e) => { e.preventDefault(); navigate('/') }}
           style={{
             display: 'inline-flex',
             alignItems: 'center',

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useOrganizer } from '../../context/OrganizerContext'
 import { User, AlertCircle, Loader2, Fingerprint } from 'lucide-react'
+import { navigate } from '../../lib/router'
 
 /** Shown to organizers who have authenticated but haven't set up their profile name yet */
 export default function OrganizerSetupPage() {
@@ -21,7 +22,7 @@ export default function OrganizerSetupPage() {
     setSaving(true)
     try {
       await setupProfile(trimmed)
-      window.location.hash = '#/organizer/dashboard'
+      navigate('/organizer/dashboard')
     } catch {
       setSaving(false)
     }

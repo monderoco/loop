@@ -11,11 +11,12 @@ import ManageAttendeesPage from './pages/organizer/ManageAttendeesPage'
 import LandingPage from './pages/LandingPage'
 import type { Route } from './types'
 import './index.css'
+import { navigate } from './lib/router'
 
-// ── Hash-based router ──────────────────────────────────────────────────────
+// ── History-based router ───────────────────────────────────────────────────
 
-function parseHash(hash: string): Route {
-  const path = hash.replace(/^#\/?/, '')
+function parsePath(path: string): Route {
+  path = path.replace(/^\/+/, '')
 
   // Organizer routes
   if (path === 'organizer' || path === 'organizer/login') return { page: 'organizer-login' }
@@ -37,14 +38,14 @@ function parseHash(hash: string): Route {
 }
 
 function useRoute(): Route {
-  const [route, setRoute] = useState<Route>(() => parseHash(window.location.hash))
+  const [route, setRoute] = useState<Route>(() => parsePath(window.location.pathname))
 
   useEffect(() => {
-    function onHashChange() {
-      setRoute(parseHash(window.location.hash))
+    function onLocationChange() {
+      setRoute(parsePath(window.location.pathname))
     }
-    window.addEventListener('hashchange', onHashChange)
-    return () => window.removeEventListener('hashchange', onHashChange)
+    window.addEventListener('popstate', onLocationChange)
+    return () => window.removeEventListener('popstate', onLocationChange)
   }, [])
 
   return route
@@ -74,19 +75,19 @@ function OrganizerGuard({ children, route }: { children: React.ReactNode; route:
 
   // Needs auth: redirect to login
   if (!isAuthenticated && route.page !== 'organizer-login') {
-    window.location.hash = '#/organizer'
+    navigate('/organizer')
     return null
   }
 
   // Authenticated but no profile yet: redirect to setup
   if (isAuthenticated && !organizer && route.page !== 'organizer-setup') {
-    window.location.hash = '#/organizer/setup'
+    navigate('/organizer/setup')
     return null
   }
 
   // Authenticated and has profile: redirect away from login to dashboard
   if (isAuthenticated && organizer && route.page === 'organizer-login') {
-    window.location.hash = '#/organizer/dashboard'
+    navigate('/organizer/dashboard')
     return null
   }
 

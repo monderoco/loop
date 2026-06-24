@@ -1,4 +1,5 @@
 import { Fingerprint, Calendar, ArrowRight } from 'lucide-react'
+import { navigate } from '../lib/router'
 
 export default function LandingPage() {
   return (
@@ -30,7 +31,7 @@ export default function LandingPage() {
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
-          <a href="#/organizer" className="btn btn-primary btn-lg" style={{ width: '100%', maxWidth: '300px' }}>
+          <a href="/organizer" onClick={(e) => { e.preventDefault(); navigate('/organizer') }} className="btn btn-primary btn-lg" style={{ width: '100%', maxWidth: '300px' }}>
             Host an event <ArrowRight size={16} />
           </a>
           

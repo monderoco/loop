@@ -7,19 +7,15 @@ import {
   Plus, Calendar, MapPin, Users, Edit3, Trash2,
   ExternalLink, LogOut, Loader2, AlertCircle, Link2, Check, Settings, X
 } from 'lucide-react'
-
-function navigate(hash: string) {
-  window.location.hash = hash
-}
+import { navigate } from '../../lib/router'
 
 export default function DashboardPage() {
-  const { organizer, signOut } = useOrganizer()
+  const { organizer, signOut, setupProfile } = useOrganizer()
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showSettings, setShowSettings] = useState(false)
-  const { setupProfile } = useOrganizer()
 
   const loadEvents = useCallback(async () => {
     setLoading(true)
@@ -93,7 +89,7 @@ export default function DashboardPage() {
           </button>
           <button
             className="btn btn-ghost btn-sm"
-            onClick={() => signOut()}
+            onClick={async () => { await signOut(); navigate('/organizer'); }}
             id="btn-organizer-signout"
           >
             <LogOut size={13} />
