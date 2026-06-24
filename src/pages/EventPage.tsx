@@ -21,16 +21,13 @@ export default function EventPage({ eventId }: EventPageProps) {
   const [event, setEvent] = useState<Event | null>(null)
   const [rsvps, setRsvps] = useState<RSVP[]>([])
   const [loading, setLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
   const [activeTab, setActiveTab] = useState<ActiveTab>('details')
   const [showGate, setShowGate] = useState(false)
   const [authed, setAuthed] = useState(!!session)
 
   const loadEvent = useCallback(async () => {
     const { data, error } = await supabase.from('loop_events').select('*').eq('id', eventId).single()
-    if (error || !data) {
-      setNotFound(true)
-    } else {
+    if (data) {
       setEvent(data)
     }
     setLoading(false)
