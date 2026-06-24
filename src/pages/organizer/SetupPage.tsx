@@ -21,7 +21,7 @@ export default function OrganizerSetupPage() {
     setSaving(true)
     try {
       await setupProfile(trimmed)
-      // OrganizerContext will update organizer state; App will route to dashboard
+      window.location.hash = '#/organizer/dashboard'
     } catch {
       setSaving(false)
     }
