@@ -54,6 +54,7 @@ export interface RSVP {
   food_pledge?: string
   helping_with_decor: boolean
   host_activity?: string
+  equipment_pledge?: string
   contact_number?: string
   email?: string
   plus_ones_data?: PlusOneContact[]

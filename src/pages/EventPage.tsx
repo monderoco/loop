@@ -21,7 +21,7 @@ export default function EventPage({ eventId }: EventPageProps) {
   const [loading, setLoading] = useState(true)
   const [authed, setAuthed] = useState(!!session)
   const [showGate, setShowGate] = useState(false)
-  const [activeModal, setActiveModal] = useState<'going' | 'food' | 'decor' | 'activity' | null>(null)
+  const [activeModal, setActiveModal] = useState<'going' | 'food' | 'decor' | 'activity' | 'equipment' | null>(null)
 
   const loadEvent = useCallback(async () => {
     // If eventId looks like a UUID, match by id or slug. Otherwise, match by slug.
@@ -51,6 +51,7 @@ export default function EventPage({ eventId }: EventPageProps) {
   const decorCount = rsvps.filter(r => r.helping_with_decor).length
   const foodCount = rsvps.reduce((sum, r) => sum + (r.food_pledge ? r.food_pledge.split(',').filter(x => x.trim()).length : 0), 0)
   const activityCount = rsvps.reduce((sum, r) => sum + (r.host_activity ? r.host_activity.split(',').filter(x => x.trim()).length : 0), 0)
+  const equipmentCount = rsvps.reduce((sum, r) => sum + (r.equipment_pledge ? r.equipment_pledge.split(',').filter(x => x.trim()).length : 0), 0)
 
   if (loading) {
     return (
@@ -185,6 +186,12 @@ export default function EventPage({ eventId }: EventPageProps) {
                 <div className="stat-cell__label">Decor helpers</div>
               </button>
             )}
+            {equipmentCount > 0 && (
+              <button className="stat-cell stat-btn" onClick={() => setActiveModal('equipment')}>
+                <div className="stat-number" style={{ color: 'var(--accent-emerald)' }}>{equipmentCount}</div>
+                <div className="stat-cell__label">Equipment</div>
+              </button>
+            )}
             {activityCount > 0 && (
               <button className="stat-cell stat-btn" onClick={() => setActiveModal('activity')}>
                 <div className="stat-number" style={{ color: 'var(--accent-amber)' }}>{activityCount}</div>
@@ -241,6 +248,7 @@ export default function EventPage({ eventId }: EventPageProps) {
               <h2 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 {activeModal === 'going' && <><Users size={18} color="var(--accent-emerald)" /> Guest List</>}
                 {activeModal === 'food' && <><UtensilsCrossed size={18} color="#fdba74" /> Food Pledges</>}
+                {activeModal === 'equipment' && <><Gamepad2 size={18} color="var(--accent-emerald)" /> Equipment</>}
                 {activeModal === 'decor' && <><Palette size={18} color="var(--text-accent)" /> Decor Helpers</>}
                 {activeModal === 'activity' && <><Gamepad2 size={18} color="var(--accent-amber)" /> Activities</>}
               </h2>
@@ -324,6 +332,34 @@ export default function EventPage({ eventId }: EventPageProps) {
                           <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
                             {activities.map((a, i) => (
                               <span key={i} className="badge" style={{ background: 'rgba(245,158,11,0.1)', color: '#d97706', border: '1px solid rgba(245,158,11,0.2)', fontSize: '0.8rem', padding: '0.2rem 0.6rem' }}>{a}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+              )}
+
+              {activeModal === 'equipment' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {rsvps.filter(r => r.equipment_pledge).length === 0 ? (
+                    <p style={{ color: 'var(--text-muted)' }}>No equipment pledges yet.</p>
+                  ) : (
+                    rsvps.filter(r => r.equipment_pledge).map(r => {
+                      const pledges = r.equipment_pledge!.split(',').map(p => p.trim()).filter(Boolean);
+                      const isAnon = (event.is_anonymous || r.is_anonymous) && r.attendee_id !== session?.attendeeId;
+                      const displayName = isAnon ? 'Anonymous Guest' : r.attendee?.name;
+                      return (
+                        <div key={r.id} style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)' }}>
+                          <div style={{ color: 'var(--text-primary)', fontWeight: 600, marginBottom: '0.4rem' }}>
+                            {displayName}
+                            {isAnon && <span style={{ marginLeft: '0.4rem', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 400 }}>(hidden)</span>}
+                            {r.attendee_id === session?.attendeeId && <span style={{ marginLeft: '0.4rem', fontSize: '0.75rem', color: 'var(--text-accent)', fontWeight: 500 }}>(you)</span>}
+                          </div>
+                          <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                            {pledges.map((p, i) => (
+                              <span key={i} className="badge badge-food" style={{ fontSize: '0.8rem', padding: '0.2rem 0.6rem' }}>{p}</span>
                             ))}
                           </div>
                         </div>

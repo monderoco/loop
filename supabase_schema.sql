@@ -62,6 +62,7 @@ create table if not exists loop_rsvps (
   created_at         timestamptz not null default now(),
   updated_at         timestamptz not null default now(),
   host_activity      text,
+  equipment_pledge   text,
 
   unique (event_id, attendee_id)
 );

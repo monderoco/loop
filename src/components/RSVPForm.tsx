@@ -25,6 +25,17 @@ const FOOD_OPTIONS = [
   { emoji: '✏️', label: 'Other (describe)' },
 ]
 
+const EQUIPMENT_OPTIONS = [
+  { emoji: '🪑', label: 'Chairs' },
+  { emoji: '🪟', label: 'Tables' },
+  { emoji: '⛺', label: 'Gazebo / Tent' },
+  { emoji: '💡', label: 'Lighting' },
+  { emoji: '🔊', label: 'Speakers / Audio' },
+  { emoji: '🧊', label: 'Cooler / Chilly Bin' },
+  { emoji: '🍽️', label: 'Cutlery / Plates' },
+  { emoji: '✏️', label: 'Other (describe)' },
+]
+
 interface RSVPFormProps {
   eventId: string
   onRSVPChange?: (rsvps: RSVP[]) => void
@@ -40,6 +51,8 @@ export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPF
   const [lateNote, setLateNote] = useState('')
   const [foodPledge, setFoodPledge] = useState('')
   const [customFood, setCustomFood] = useState('')
+  const [equipmentPledge, setEquipmentPledge] = useState('')
+  const [customEquipment, setCustomEquipment] = useState('')
   const [helpingWithDecor, setHelpingWithDecor] = useState(false)
   const [contactNumber, setContactNumber] = useState('')
   const [email, setEmail] = useState('')
@@ -86,6 +99,7 @@ export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPF
       setIsLate(rsvp.is_late)
       setLateNote(rsvp.late_note || '')
       setFoodPledge(rsvp.food_pledge || '')
+      setEquipmentPledge(rsvp.equipment_pledge || '')
       setHelpingWithDecor(rsvp.helping_with_decor)
       setContactNumber(rsvp.contact_number || '')
       setEmail(rsvp.email || '')
@@ -105,6 +119,7 @@ export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPF
     setSaving(true)
     setError(null)
     const finalFood = foodPledge === '✏️ Other (describe)' ? customFood : foodPledge
+    const finalEquipment = equipmentPledge === '✏️ Other (describe)' ? customEquipment : equipmentPledge
     const result = await upsertRSVP({
       event_id: eventId,
       attendee_id: session.attendeeId,
@@ -113,6 +128,7 @@ export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPF
       is_late: isLate,
       late_note: isLate ? lateNote : undefined,
       food_pledge: finalFood || undefined,
+      equipment_pledge: finalEquipment || undefined,
       helping_with_decor: helpingWithDecor,
       host_activity: isHosting ? (hostActivity || undefined) : undefined,
       contact_number: contactNumber || undefined,
@@ -131,7 +147,7 @@ export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPF
       onRSVPChange?.(all)
     }
     setSaving(false)
-  }, [session, status, eventId, plusOnes, isLate, lateNote, foodPledge, customFood, helpingWithDecor, contactNumber, email, hostActivity, isHosting, plusOnesData, isAnonymous, onRSVPChange])
+  }, [session, status, eventId, plusOnes, isLate, lateNote, foodPledge, customFood, equipmentPledge, customEquipment, helpingWithDecor, contactNumber, email, hostActivity, isHosting, plusOnesData, isAnonymous, onRSVPChange])
 
   if (loading) {
     return (
@@ -146,10 +162,18 @@ export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPF
   const currentFoodItems = currentFood.split(',').map(f => f.trim()).filter(Boolean);
   
   const othersBringingFood = allRsvps.filter(r => {
-    if (r.attendee_id === session?.attendeeId) return false;
-    if (!r.food_pledge) return false;
+    if (r.status !== 'going' || r.attendee_id === session?.attendeeId || !r.food_pledge) return false;
     const theirItems = r.food_pledge.split(',').map(f => f.trim().toLowerCase());
     return currentFoodItems.some(item => theirItems.includes(item.toLowerCase()));
+  }).length;
+
+  const currentEquipment = equipmentPledge === '✏️ Other (describe)' ? customEquipment : equipmentPledge;
+  const currentEquipmentItems = currentEquipment.split(',').map(e => e.trim()).filter(Boolean);
+
+  const othersBringingEquipment = allRsvps.filter(r => {
+    if (r.status !== 'going' || r.attendee_id === session?.attendeeId || !r.equipment_pledge) return false;
+    const theirItems = r.equipment_pledge.split(',').map(e => e.trim().toLowerCase());
+    return currentEquipmentItems.some(item => theirItems.includes(item.toLowerCase()));
   }).length;
 
   return (
@@ -324,6 +348,56 @@ export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPF
             )}
 
             {!foodPledge && (
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                Optional — skip if you're not bringing anything
+              </p>
+            )}
+          </div>
+
+          {/* Equipment pledge */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+              <Gamepad2 size={15} color="var(--accent-emerald)" />
+              <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Equipment pledge</span>
+            </div>
+
+            <div className="food-grid">
+              {EQUIPMENT_OPTIONS.map(opt => {
+                const val = `${opt.emoji} ${opt.label}`
+                return (
+                  <button
+                    key={opt.label}
+                    type="button"
+                    className={`food-chip ${equipmentPledge === val ? 'selected' : ''}`}
+                    onClick={() => setEquipmentPledge(equipmentPledge === val ? '' : val)}
+                    id={`equipment-${opt.label.toLowerCase().replace(/\s+/g, '-')}`}
+                  >
+                    <span className="food-chip__emoji">{opt.emoji}</span>
+                    {opt.label}
+                  </button>
+                )
+              })}
+            </div>
+
+            {equipmentPledge === '✏️ Other (describe)' && (
+              <input
+                id="input-custom-equipment"
+                className="input"
+                type="text"
+                placeholder="What will you bring? (e.g. extension cords)"
+                value={customEquipment}
+                onChange={e => setCustomEquipment(e.target.value)}
+                style={{ marginTop: '0.6rem' }}
+              />
+            )}
+
+            {othersBringingEquipment > 0 && currentEquipmentItems.length > 0 && (
+              <p style={{ fontSize: '0.78rem', color: 'var(--accent-amber)', marginTop: '0.5rem', fontWeight: 500 }}>
+                💡 Heads up! {othersBringingEquipment === 1 ? '1 other guest is' : `${othersBringingEquipment} other guests are`} bringing something similar.
+              </p>
+            )}
+
+            {!equipmentPledge && (
               <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
                 Optional — skip if you're not bringing anything
               </p>
