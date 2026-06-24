@@ -82,7 +82,44 @@ export default function EventPage({ eventId }: EventPageProps) {
         />
       )}
 
-      <div className="container" style={{ padding: '0 1.25rem 4rem' }}>
+      {!authed && event.status !== 'cancelled' ? (
+        <div className="invite-wrapper fade-in">
+          <div className="invite-card">
+            <span style={{ display: 'inline-block', padding: '0.5rem 1rem', background: 'rgba(139,92,246,0.1)', color: 'var(--accent-purple)', borderRadius: '100px', fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '1.5rem' }}>
+              ✨ You're Invited
+            </span>
+            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2.5rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1, marginBottom: '1.5rem' }}>
+              {event.title}
+            </h1>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '1.05rem' }}>
+                <Calendar size={18} color="var(--accent-cyan)" />
+                {format(eventDate, 'EEEE, MMMM d, yyyy')}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '1.05rem' }}>
+                <Clock size={18} color="var(--accent-purple)" />
+                {format(eventDate, 'h:mm a')}
+              </div>
+              {event.location && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '1.05rem' }}>
+                  <MapPin size={18} color="var(--accent-emerald)" />
+                  {event.location}
+                </div>
+              )}
+            </div>
+
+            <button
+              className="btn btn-primary btn-lg btn-rsvp-pulse"
+              style={{ width: '100%' }}
+              onClick={() => setShowGate(true)}
+            >
+              Open Invitation & RSVP
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="container" style={{ padding: '0 1.25rem 4rem' }}>
 
         {/* ── Event Hero ── */}
         <section className="event-hero fade-in">
@@ -185,48 +222,16 @@ export default function EventPage({ eventId }: EventPageProps) {
           )}
 
           {/* RSVP section */}
-          {event.status !== 'cancelled' && (
-            authed ? (
-              <RSVPForm
-                eventId={event.id}
-                onRSVPChange={setRsvps}
-                allRsvps={rsvps}
-              />
-            ) : (
-            <div
-              className="card fade-in"
-              style={{
-                textAlign: 'center',
-                padding: '2.5rem',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '1rem',
-                borderStyle: 'dashed',
-                borderColor: 'rgba(139,92,246,0.3)',
-                background: 'rgba(139,92,246,0.04)',
-              }}
-            >
-              <div style={{ fontSize: '2.5rem' }}>🎟️</div>
-              <div>
-                <p style={{ fontWeight: 700, fontSize: '1.05rem', marginBottom: '0.35rem' }}>
-                  Ready to RSVP?
-                </p>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', maxWidth: '320px' }}>
-                  It only takes a second. We'll save your response with a passkey — no account needed.
-                </p>
-              </div>
-              <button
-                id="btn-rsvp-cta"
-                className="btn btn-primary btn-lg"
-                onClick={() => setShowGate(true)}
-              >
-                RSVP to this event
-              </button>
-            </div>
-          ))}
+          {event.status !== 'cancelled' && authed && (
+            <RSVPForm
+              eventId={event.id}
+              onRSVPChange={setRsvps}
+              allRsvps={rsvps}
+            />
+          )}
         </div>
       </div>
+      )}
 
       {/* ── Modals ── */}
       {activeModal && (
