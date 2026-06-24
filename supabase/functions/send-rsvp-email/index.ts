@@ -108,11 +108,19 @@ serve(async (req) => {
 
     // 2. Send notification to the Organizer
     if (event.organizer_id) {
-      const { data: userData } = await supabase.auth.admin.getUserById(event.organizer_id);
-      const organizerEmail = userData?.user?.email;
+      // Small delay to prevent Resend rate limits (2 per second on free tier)
+      await new Promise(r => setTimeout(r, 1000));
       
-      if (organizerEmail) {
-        const plusOneText = plus_ones > 0 ? ` + ${plus_ones}` : "";
+      try {
+        const { data: userData, error: userError } = await supabase.auth.admin.getUserById(event.organizer_id);
+        const organizerEmail = userData?.user?.email;
+        
+        if (userError) {
+          console.error("Failed to fetch organizer from auth.users:", userError);
+        }
+        
+        if (organizerEmail) {
+          const plusOneText = plus_ones > 0 ? ` + ${plus_ones}` : "";
         const orgSubject = `New RSVP: ${attendeeName} is ${status} for ${eventTitle}`;
         const orgHtml = `
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
@@ -146,6 +154,8 @@ serve(async (req) => {
         } else {
           console.log(`Successfully notified organizer ${organizerEmail}`);
         }
+      } catch (orgErr) {
+        console.error("Error during organizer notification:", orgErr);
       }
     }
 
