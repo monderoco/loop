@@ -10,65 +10,34 @@ import RSVPForm from '../components/RSVPForm'
 import AttendeeList from '../components/AttendeeList'
 import PasskeyGate from '../components/PasskeyGate'
 
-// ── Demo event shown when Supabase is not configured ──────────────
-const DEMO_EVENT: Event = {
-  id: 'demo',
-  title: "Summer Garden Party 🌸",
-  description: `
-Welcome to our **summer garden party**! We're so excited to celebrate with you all.
-
-## What to expect
-
-- 🎶 Live acoustic music from 4pm
-- 🌿 Beautiful garden setting with fairy lights
-- 🍹 Cocktail hour before dinner
-
-## The vibe
-
-Think *garden chic* — floral prints, linen, and your best summer look. No dress code, just good energy!
-
-## Video preview
-
-[Watch our teaser](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
-
----
-
-Reach out to Sarah at **sarah@example.com** if you have any questions. Can't wait to see you there! 🥂
-  `.trim(),
-  location: '42 Blossom Lane, Greenfield',
-  event_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-}
-
 interface EventPageProps {
-  eventId?: string
+  eventId: string
 }
 
 type ActiveTab = 'details' | 'guests'
 
-export default function EventPage({ eventId = 'demo' }: EventPageProps) {
+export default function EventPage({ eventId }: EventPageProps) {
   const { session } = useAuth()
   const [event, setEvent] = useState<Event | null>(null)
   const [rsvps, setRsvps] = useState<RSVP[]>([])
   const [loading, setLoading] = useState(true)
+  const [notFound, setNotFound] = useState(false)
   const [activeTab, setActiveTab] = useState<ActiveTab>('details')
   const [showGate, setShowGate] = useState(false)
   const [authed, setAuthed] = useState(!!session)
 
   const loadEvent = useCallback(async () => {
-    if (eventId === 'demo') {
-      setEvent(DEMO_EVENT)
-      setLoading(false)
-      return
+    const { data, error } = await supabase.from('loop_events').select('*').eq('id', eventId).single()
+    if (error || !data) {
+      setNotFound(true)
+    } else {
+      setEvent(data)
     }
-    const { data } = await supabase.from('events').select('*').eq('id', eventId).single()
-    setEvent(data || DEMO_EVENT)
     setLoading(false)
   }, [eventId])
 
   const loadRSVPs = useCallback(async () => {
-    const all = await getEventRSVPs(eventId === 'demo' ? 'demo' : eventId)
+    const all = await getEventRSVPs(eventId)
     setRsvps(all)
   }, [eventId])
 
