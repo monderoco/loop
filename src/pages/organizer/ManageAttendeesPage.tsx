@@ -3,9 +3,9 @@ import { getEvent, getEventRSVPs, updateAttendeeName, deleteAttendee, deleteRSVP
 import type { Event, RSVP } from '../../types'
 import { format } from 'date-fns'
 import {
-  ArrowLeft, Users, Palette, Clock,
-  Pencil, Trash2, Check, X, Loader2, AlertCircle,
-  CheckCircle2, HelpCircle, XCircle, ExternalLink, Gamepad2
+  ArrowLeft, Trash2, ExternalLink,
+  X, AlertCircle, Copy, Check,
+  Users, Palette, Clock, Pencil, Loader2, HelpCircle, XCircle, Gamepad2
 } from 'lucide-react'
 
 function navigate(hash: string) { window.location.hash = hash }
@@ -17,7 +17,7 @@ interface ManageAttendeesPageProps {
 type Filter = 'all' | 'going' | 'maybe' | 'not_going'
 
 const STATUS_ICON = {
-  going: <CheckCircle2 size={13} color="#10b981" />,
+  going: <Check size={13} color="#10b981" />,
   maybe: <HelpCircle size={13} color="#f59e0b" />,
   not_going: <XCircle size={13} color="#f43f5e" />,
 }
@@ -37,6 +37,7 @@ export default function ManageAttendeesPage({ eventId }: ManageAttendeesPageProp
   const [editName, setEditName] = useState('')
   const [savingId, setSavingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [copiedLink, setCopiedLink] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
@@ -157,6 +158,42 @@ export default function ManageAttendeesPage({ eventId }: ManageAttendeesPageProp
           </p>
         )}
       </div>
+
+      {/* Share Invite Card */}
+      {event && (
+        <div className="card fade-in" style={{ marginBottom: '1.5rem', background: 'linear-gradient(145deg, rgba(139,92,246,0.1) 0%, rgba(6,182,212,0.05) 100%)', border: '1px solid rgba(139,92,246,0.2)', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: '-50%', left: '-10%', width: '150%', height: '200%', background: 'radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 70%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              ✨ Invite Your Guests
+            </h3>
+            <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+              Share this link with your friends to let them RSVP. No account required for them!
+            </p>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+              <input 
+                type="text" 
+                className="input" 
+                readOnly 
+                value={`${window.location.origin}/#/event/${event.slug || event.id}`}
+                style={{ flex: 1, background: 'var(--bg-input)', borderColor: 'var(--border)' }}
+                onClick={(e) => (e.target as HTMLInputElement).select()}
+              />
+              <button 
+                className="btn btn-primary" 
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/#/event/${event.slug || event.id}`)
+                  setCopiedLink(true)
+                  setTimeout(() => setCopiedLink(false), 2000)
+                }}
+              >
+                {copiedLink ? <Check size={16} /> : <Copy size={16} />}
+                {copiedLink ? 'Copied!' : 'Copy Link'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="alert alert-error" style={{ marginBottom: '1.5rem' }}>

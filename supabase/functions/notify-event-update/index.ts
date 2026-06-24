@@ -85,7 +85,7 @@ serve(async (req) => {
       `;
 
       return {
-        from: "Loop Notifications <loop@mondero.nz>",
+        from: "Loop Events ✨ <invite@mondero.nz>",
         to: [guest.email],
         subject: subject,
         html: htmlContent
