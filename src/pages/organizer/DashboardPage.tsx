@@ -5,7 +5,7 @@ import type { Event } from '../../types'
 import { format } from 'date-fns'
 import {
   Plus, Calendar, MapPin, Users, Edit3, Trash2,
-  ExternalLink, LogOut, Loader2, AlertCircle, Link2, Check
+  ExternalLink, LogOut, Loader2, AlertCircle, Link2, Check, Settings, X
 } from 'lucide-react'
 
 function navigate(hash: string) {
@@ -18,6 +18,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [showSettings, setShowSettings] = useState(false)
+  const { setupProfile } = useOrganizer()
 
   const loadEvents = useCallback(async () => {
     setLoading(true)
@@ -80,15 +82,33 @@ export default function DashboardPage() {
             </span>
           </div>
         </div>
-        <button
-          className="btn btn-ghost btn-sm"
-          onClick={() => signOut()}
-          id="btn-organizer-signout"
-        >
-          <LogOut size={13} />
-          Sign out
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => setShowSettings(true)}
+            title="Profile Settings"
+          >
+            <Settings size={13} />
+            Settings
+          </button>
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => signOut()}
+            id="btn-organizer-signout"
+          >
+            <LogOut size={13} />
+            Sign out
+          </button>
+        </div>
       </div>
+
+      {showSettings && organizer && (
+        <SettingsModal 
+          currentName={organizer.name} 
+          onClose={() => setShowSettings(false)} 
+          onSave={setupProfile} 
+        />
+      )}
 
       <div className="container container--wide" style={{ padding: '2rem 1.25rem 4rem' }}>
         {/* Header row */}
@@ -326,6 +346,78 @@ function EventCard({
         >
           {deleting ? <Loader2 size={13} style={{ animation: 'spin 0.7s linear infinite' }} /> : <Trash2 size={13} />}
         </button>
+      </div>
+    </div>
+  )
+}
+
+function SettingsModal({ 
+  currentName, 
+  onClose, 
+  onSave 
+}: { 
+  currentName: string; 
+  onClose: () => void; 
+  onSave: (name: string) => Promise<void> 
+}) {
+  const [name, setName] = useState(currentName)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault()
+    if (!name.trim()) return
+    
+    setSaving(true)
+    setError(null)
+    try {
+      await onSave(name.trim())
+      onClose()
+    } catch (err: any) {
+      setError(err.message || 'Failed to save profile')
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content" style={{ maxWidth: '400px' }}>
+        <div className="modal-header">
+          <h2 className="modal-title">Profile Settings</h2>
+          <button className="btn btn-ghost btn-sm" onClick={onClose} style={{ padding: '0.25rem' }}>
+            <X size={16} />
+          </button>
+        </div>
+        <form onSubmit={handleSave} style={{ padding: '1.25rem' }}>
+          {error && (
+            <div className="alert alert-error" style={{ marginBottom: '1rem' }}>
+              <AlertCircle size={14} /> {error}
+            </div>
+          )}
+          
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label className="input-label" htmlFor="org-name">Your Name</label>
+            <input
+              id="org-name"
+              type="text"
+              className="input"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="e.g. Sarah"
+              autoFocus
+            />
+          </div>
+          
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+            <button type="button" className="btn btn-secondary" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={saving || !name.trim()}>
+              {saving ? <Loader2 size={15} className="spin" /> : <Check size={15} />}
+              Save Changes
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   )
