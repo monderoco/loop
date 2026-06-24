@@ -173,7 +173,7 @@ export default function EventPage({ eventId }: EventPageProps) {
             className={`tab ${activeTab === 'guests' ? 'active' : ''}`}
             onClick={() => setActiveTab('guests')}
           >
-            Guests ({rsvps.length})
+            Guests ({going})
           </button>
         </div>
 
@@ -227,6 +227,19 @@ export default function EventPage({ eventId }: EventPageProps) {
                 </button>
               </div>
             ))}
+
+          </div>
+        )}
+
+        {/* ── Guests tab ── */}
+        {activeTab === 'guests' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div className="card fade-in">
+              <AttendeeList
+                rsvps={rsvps}
+                myAttendeeId={session?.attendeeId}
+              />
+            </div>
 
             {/* Food, Decor & Activities summary (if there are pledges) */}
             {(food > 0 || decor > 0 || activity > 0) && (
@@ -300,16 +313,6 @@ export default function EventPage({ eventId }: EventPageProps) {
                 )}
               </div>
             )}
-          </div>
-        )}
-
-        {/* ── Guests tab ── */}
-        {activeTab === 'guests' && (
-          <div className="card fade-in">
-            <AttendeeList
-              rsvps={rsvps}
-              myAttendeeId={session?.attendeeId}
-            />
           </div>
         )}
       </div>
