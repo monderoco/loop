@@ -29,7 +29,7 @@ export default function EventPage({ eventId }: EventPageProps) {
     // If eventId looks like a UUID, match by id or slug. Otherwise, match by slug.
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(eventId);
     const query = supabase.from('loop_events').select('*');
-    const { data, error } = await (isUuid 
+    const { data } = await (isUuid 
       ? query.eq('id', eventId).single() 
       : query.eq('slug', eventId).single());
 
