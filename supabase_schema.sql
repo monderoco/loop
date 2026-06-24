@@ -1,7 +1,10 @@
 -- ============================================================
--- RSVP App — Supabase Schema (v2 — with Organizers)
+-- Loop App — Supabase Schema
 -- Run this in Supabase SQL Editor (Project > SQL Editor)
 -- ============================================================
+
+-- Enable pg_trgm extension for similarity() — must be before functions
+create extension if not exists pg_trgm;
 
 -- ── Events ──────────────────────────────────────────────────
 create table if not exists loop_events (
@@ -139,5 +142,3 @@ as $$
   limit 5;
 $$;
 
--- Enable pg_trgm extension for similarity()
-create extension if not exists pg_trgm;
