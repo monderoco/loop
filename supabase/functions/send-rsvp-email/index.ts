@@ -121,38 +121,39 @@ serve(async (req) => {
         
         if (organizerEmail) {
           const plusOneText = plus_ones > 0 ? ` + ${plus_ones}` : "";
-        const orgSubject = `New RSVP: ${attendeeName} is ${status} for ${eventTitle}`;
-        const orgHtml = `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
-            <h2 style="color: #8b5cf6;">RSVP Update</h2>
-            <p><strong>${attendeeName}</strong> has just updated their RSVP for <strong>${eventTitle}</strong>.</p>
-            <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 0 0 8px;"><strong>Status:</strong> ${status.toUpperCase()} ${plusOneText}</p>
-              <p style="margin: 0 0 8px;"><strong>Guest Email:</strong> ${record.email}</p>
-              ${record.contact_number ? `<p style="margin: 0;"><strong>Guest Phone:</strong> ${record.contact_number}</p>` : ''}
+          const orgSubject = `New RSVP: ${attendeeName} is ${status} for ${eventTitle}`;
+          const orgHtml = `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+              <h2 style="color: #8b5cf6;">RSVP Update</h2>
+              <p><strong>${attendeeName}</strong> has just updated their RSVP for <strong>${eventTitle}</strong>.</p>
+              <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 20px 0;">
+                <p style="margin: 0 0 8px;"><strong>Status:</strong> ${status.toUpperCase()} ${plusOneText}</p>
+                <p style="margin: 0 0 8px;"><strong>Guest Email:</strong> ${record.email}</p>
+                ${record.contact_number ? `<p style="margin: 0;"><strong>Guest Phone:</strong> ${record.contact_number}</p>` : ''}
+              </div>
+              <p>Check your Loop Dashboard for the full guest list!</p>
             </div>
-            <p>Check your Loop Dashboard for the full guest list!</p>
-          </div>
-        `;
+          `;
 
-        const orgRes = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${resendApiKey}`
-          },
-          body: JSON.stringify({
-            from: "Loop Notifications <hello@loop.mondero.nz>",
-            to: [organizerEmail],
-            subject: orgSubject,
-            html: orgHtml
-          })
-        });
+          const orgRes = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${resendApiKey}`
+            },
+            body: JSON.stringify({
+              from: "Loop Notifications <hello@loop.mondero.nz>",
+              to: [organizerEmail],
+              subject: orgSubject,
+              html: orgHtml
+            })
+          });
 
-        if (!orgRes.ok) {
-          console.error("Resend API Error (Organizer):", await orgRes.text());
-        } else {
-          console.log(`Successfully notified organizer ${organizerEmail}`);
+          if (!orgRes.ok) {
+            console.error("Resend API Error (Organizer):", await orgRes.text());
+          } else {
+            console.log(`Successfully notified organizer ${organizerEmail}`);
+          }
         }
       } catch (orgErr) {
         console.error("Error during organizer notification:", orgErr);
