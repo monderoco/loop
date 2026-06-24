@@ -135,7 +135,8 @@ export default function ManageAttendeesPage({ eventId }: ManageAttendeesPageProp
             {event?.title ?? 'Event'}
           </h1>
           <a
-            href={`#/event/${eventId}`}
+            href={`/event/${eventId}`}
+            onClick={(e) => { e.preventDefault(); navigate(`/event/${eventId}`) }}
             className="btn btn-ghost btn-sm"
             title="View guest page"
             id="btn-view-guest-page"
@@ -174,14 +175,14 @@ export default function ManageAttendeesPage({ eventId }: ManageAttendeesPageProp
                 type="text" 
                 className="input" 
                 readOnly 
-                value={`${window.location.origin}/#/event/${event.slug || event.id}`}
+                value={`${window.location.origin}/event/${event.slug || event.id}`}
                 style={{ flex: 1, background: 'var(--bg-input)', borderColor: 'var(--border)' }}
                 onClick={(e) => (e.target as HTMLInputElement).select()}
               />
               <button 
                 className="btn btn-primary" 
                 onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/#/event/${event.slug || event.id}`)
+                  navigator.clipboard.writeText(`${window.location.origin}/event/${event.slug || event.id}`)
                   setCopiedLink(true)
                   setTimeout(() => setCopiedLink(false), 2000)
                 }}

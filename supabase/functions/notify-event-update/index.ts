@@ -80,7 +80,7 @@ serve(async (req) => {
               <p style="margin: 0; font-style: italic;">"${message}"</p>
             </div>
           ` : ''}
-          <p>${isCancel ? 'We hope to see you at a future event!' : `Check out the updated details using your original RSVP link: <a href="https://loop.mondero.nz/#/event/${event.slug || eventId}">View Event</a>`}</p>
+          <p>${isCancel ? 'We hope to see you at a future event!' : `Check out the updated details using your original RSVP link: <a href="https://loop.mondero.nz/event/${event.slug || eventId}">View Event</a>`}</p>
         </div>
       `;
 

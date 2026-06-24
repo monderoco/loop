@@ -241,7 +241,7 @@ function EventCard({
 
   function copyShareLink() {
     const urlId = event.slug || event.id
-    const url = `${window.location.origin}${window.location.pathname}#/event/${urlId}`
+    const url = `${window.location.origin}/event/${urlId}`
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
@@ -310,7 +310,8 @@ function EventCard({
           {copied ? 'Copied!' : 'Share'}
         </button>
         <a
-          href={`#/event/${event.slug || event.id}`}
+          href={`/event/${event.slug || event.id}`}
+          onClick={(e) => { e.preventDefault(); navigate(`/event/${event.slug || event.id}`) }}
           className="btn btn-ghost btn-sm"
           title="View guest page"
           id={`btn-view-event-${event.id}`}

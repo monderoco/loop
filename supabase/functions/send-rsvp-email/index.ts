@@ -43,7 +43,7 @@ serve(async (req) => {
     const eventTitle = event.title;
     const eventDate = new Date(event.event_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric' });
     
-    const eventLink = `https://loop.mondero.nz/#/event/${event.slug || event.id}`;
+    const eventLink = `https://loop.mondero.nz/event/${event.slug || event.id}`;
     const calStart = new Date(event.event_date).toISOString().replace(/-|:|\.\d\d\d/g, "");
     const calEnd = new Date(new Date(event.event_date).getTime() + 2 * 60 * 60 * 1000).toISOString().replace(/-|:|\.\d\d\d/g, "");
     const calLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${calStart}/${calEnd}&details=${encodeURIComponent("RSVP and details: " + eventLink)}&location=${encodeURIComponent(event.location || "")}`;

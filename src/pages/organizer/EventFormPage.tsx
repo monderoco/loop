@@ -236,7 +236,7 @@ export default function EventFormPage({ eventId }: EventFormPageProps) {
             <label className="input-label" htmlFor="input-event-slug">URL slug (optional)</label>
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <span style={{ padding: '0.65rem 0.5rem 0.65rem 0.8rem', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRight: 'none', borderRadius: 'var(--radius-md) 0 0 var(--radius-md)', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                loop.mondero.nz/#/event/
+                loop.mondero.nz/event/
               </span>
               <input
                 id="input-event-slug"
