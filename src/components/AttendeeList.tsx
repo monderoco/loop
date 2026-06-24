@@ -1,5 +1,5 @@
 import type { RSVP } from '../types'
-import { CheckCircle2, XCircle, HelpCircle, Clock, UtensilsCrossed, Palette } from 'lucide-react'
+import { CheckCircle2, XCircle, HelpCircle, Clock, UtensilsCrossed, Palette, Gamepad2, Users } from 'lucide-react'
 
 interface AttendeeListProps {
   rsvps: RSVP[]
@@ -84,15 +84,26 @@ export default function AttendeeList({ rsvps, myAttendeeId }: AttendeeListProps)
                   </div>
 
                   <div className="attendee-row__badges">
+                    {rsvp.plus_ones ? (
+                      <span className="badge" style={{ background: 'var(--surface-sunken)', color: 'var(--text-secondary)' }}>
+                        <Users size={10} /> +{rsvp.plus_ones}
+                      </span>
+                    ) : null}
                     {rsvp.is_late && (
                       <span className="badge badge-late" title={rsvp.late_note || 'Arriving late'}>
                         <Clock size={10} /> Late
                       </span>
                     )}
-                    {rsvp.food_pledge && (
-                      <span className="badge badge-food" title={rsvp.food_pledge}>
+                    {rsvp.food_pledge && rsvp.food_pledge.split(',').filter(f => f.trim()).map((f, i) => (
+                      <span key={i} className="badge badge-food" title={f.trim()}>
                         <UtensilsCrossed size={10} />
-                        {rsvp.food_pledge.length > 14 ? rsvp.food_pledge.slice(0, 14) + '…' : rsvp.food_pledge}
+                        {f.trim().length > 14 ? f.trim().slice(0, 14) + '…' : f.trim()}
+                      </span>
+                    ))}
+                    {rsvp.host_activity && (
+                      <span className="badge" style={{ background: 'rgba(245,158,11,0.1)', color: '#d97706', border: '1px solid rgba(245,158,11,0.2)' }} title={rsvp.host_activity}>
+                        <Gamepad2 size={10} />
+                        {rsvp.host_activity.length > 14 ? rsvp.host_activity.slice(0, 14) + '…' : rsvp.host_activity}
                       </span>
                     )}
                     {rsvp.helping_with_decor && (
