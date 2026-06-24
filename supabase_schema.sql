@@ -141,6 +141,21 @@ create policy "contacts_public_insert"
 create policy "contacts_public_update"
   on loop_rsvp_contacts for update using (true) with check (true);
 
+-- ── Helper function: secure contact upsert ──────────────────
+-- Allows guests to upsert their contact info without needing SELECT permissions
+create or replace function loop_upsert_contact(p_rsvp_id uuid, p_contact_number text, p_email text)
+returns void
+language sql
+security definer
+as $$
+  insert into loop_rsvp_contacts (rsvp_id, contact_number, email, updated_at)
+  values (p_rsvp_id, p_contact_number, p_email, now())
+  on conflict (rsvp_id) do update
+  set contact_number = excluded.contact_number,
+      email = excluded.email,
+      updated_at = excluded.updated_at;
+$$;
+
 create policy "rsvps_public_insert"
   on loop_rsvps for insert with check (true);
 

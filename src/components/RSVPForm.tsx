@@ -154,20 +154,16 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
               <Users size={14} color="var(--accent-purple)" />
               Bringing anyone else? (+1s)
             </label>
-            <select
+            <input
               id="input-plus-ones"
               className="input"
-              value={plusOnes}
-              onChange={e => setPlusOnes(parseInt(e.target.value, 10))}
+              type="number"
+              min="0"
+              value={plusOnes === 0 ? '' : plusOnes}
+              placeholder="0"
+              onChange={e => setPlusOnes(Math.max(0, parseInt(e.target.value || '0', 10)))}
               style={{ width: '100%', maxWidth: '200px' }}
-            >
-              <option value={0}>No, just me</option>
-              <option value={1}>+1 person</option>
-              <option value={2}>+2 people</option>
-              <option value={3}>+3 people</option>
-              <option value={4}>+4 people</option>
-              <option value={5}>+5 people</option>
-            </select>
+            />
           </div>
 
           {/* Late arrival */}

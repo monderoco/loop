@@ -246,11 +246,10 @@ export async function upsertRSVP(
   if (error) { console.error('upsertRSVP error:', error); return null }
 
   if (contact_number || email) {
-    const { error: contactErr } = await supabase.from('loop_rsvp_contacts').upsert({
-      rsvp_id: data.id,
-      contact_number: contact_number || null,
-      email: email || null,
-      updated_at: new Date().toISOString()
+    const { error: contactErr } = await supabase.rpc('loop_upsert_contact', {
+      p_rsvp_id: data.id,
+      p_contact_number: contact_number || null,
+      p_email: email || null
     })
     if (contactErr) console.error('Failed to save contact:', contactErr)
   }
