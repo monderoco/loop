@@ -25,6 +25,7 @@ const BLANK_FORM = {
   cover_image_url: '',
   video_url: '',
   status: 'active' as 'active' | 'cancelled',
+  is_anonymous: false,
 }
 
 export default function EventFormPage({ eventId }: EventFormPageProps) {
@@ -57,6 +58,7 @@ export default function EventFormPage({ eventId }: EventFormPageProps) {
         cover_image_url: event.cover_image_url || '',
         video_url: event.video_url || '',
         status: event.status || 'active',
+        is_anonymous: event.is_anonymous || false,
       })
       if (event.contacts && event.contacts.length > 0) {
         setContacts(event.contacts)
@@ -99,9 +101,11 @@ export default function EventFormPage({ eventId }: EventFormPageProps) {
       location: form.location.trim(),
       event_date: dateTime.toISOString(),
       cover_image_url: form.cover_image_url || undefined,
-      video_url: form.video_url || undefined,
+      video_url: form.video_url.trim() || undefined,
+      status: form.status,
+      is_anonymous: form.is_anonymous,
       organizer_id: organizer!.id,
-      contacts: contacts,
+      contacts: contacts.filter(c => c.name.trim() !== ''),
     }
 
     let result: Event | null = null
@@ -432,6 +436,28 @@ export default function EventFormPage({ eventId }: EventFormPageProps) {
               />
             </div>
           )}
+        </div>
+
+        {/* Settings */}
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <p className="section-heading" style={{ marginBottom: 0 }}>Privacy Settings</p>
+          <label className="checkbox-label" style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+            <input
+              type="checkbox"
+              className="checkbox"
+              checked={form.is_anonymous}
+              onChange={e => {
+                setForm(prev => ({ ...prev, is_anonymous: e.target.checked }));
+                setSaved(false);
+              }}
+            />
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontWeight: 600 }}>Anonymize all guests on public lists</span>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                If enabled, every guest will appear as "Anonymous Guest" to everyone except the organizer, regardless of their personal RSVP preference.
+              </span>
+            </div>
+          </label>
         </div>
 
         {isEdit && form.status !== 'cancelled' && (

@@ -250,7 +250,7 @@ export default function EventPage({ eventId }: EventPageProps) {
             </div>
             <div style={{ padding: '1.25rem' }}>
               {activeModal === 'going' && (
-                <AttendeeList rsvps={rsvps} myAttendeeId={session?.attendeeId} />
+                <AttendeeList rsvps={rsvps} myAttendeeId={session?.attendeeId} isEventAnonymous={event.is_anonymous} />
               )}
               
               {activeModal === 'food' && (
@@ -260,7 +260,7 @@ export default function EventPage({ eventId }: EventPageProps) {
                   ) : (
                     rsvps.filter(r => r.food_pledge).map(r => {
                       const pledges = r.food_pledge!.split(',').map(p => p.trim()).filter(Boolean);
-                      const isAnon = r.is_anonymous && r.attendee_id !== session?.attendeeId;
+                      const isAnon = (event.is_anonymous || r.is_anonymous) && r.attendee_id !== session?.attendeeId;
                       const displayName = isAnon ? 'Anonymous Guest' : r.attendee?.name;
                       return (
                         <div key={r.id} style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)' }}>
@@ -287,7 +287,7 @@ export default function EventPage({ eventId }: EventPageProps) {
                     <p style={{ color: 'var(--text-muted)' }}>No decor helpers yet.</p>
                   ) : (
                     rsvps.filter(r => r.helping_with_decor).map(r => {
-                      const isAnon = r.is_anonymous && r.attendee_id !== session?.attendeeId;
+                      const isAnon = (event.is_anonymous || r.is_anonymous) && r.attendee_id !== session?.attendeeId;
                       const displayName = isAnon ? 'Anonymous Guest' : r.attendee?.name;
                       const initials = isAnon ? 'AG' : r.attendee?.name.slice(0, 2).toUpperCase();
                       return (
@@ -312,7 +312,7 @@ export default function EventPage({ eventId }: EventPageProps) {
                   ) : (
                     rsvps.filter(r => r.host_activity).map(r => {
                       const activities = r.host_activity!.split(',').map(a => a.trim()).filter(Boolean);
-                      const isAnon = r.is_anonymous && r.attendee_id !== session?.attendeeId;
+                      const isAnon = (event.is_anonymous || r.is_anonymous) && r.attendee_id !== session?.attendeeId;
                       const displayName = isAnon ? 'Anonymous Guest' : r.attendee?.name;
                       return (
                         <div key={r.id} style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)' }}>

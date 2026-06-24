@@ -4,6 +4,7 @@ import { CheckCircle2, XCircle, HelpCircle, Clock, UtensilsCrossed, Palette, Gam
 interface AttendeeListProps {
   rsvps: RSVP[]
   myAttendeeId?: string
+  isEventAnonymous?: boolean
 }
 
 function getInitials(name: string) {
@@ -33,7 +34,7 @@ const STATUS_LABEL = {
   not_going: "Can't go",
 }
 
-export default function AttendeeList({ rsvps, myAttendeeId }: AttendeeListProps) {
+export default function AttendeeList({ rsvps, myAttendeeId, isEventAnonymous }: AttendeeListProps) {
   const going = rsvps.filter(r => r.status === 'going')
   const maybe = rsvps.filter(r => r.status === 'maybe')
   const notGoing = rsvps.filter(r => r.status === 'not_going')
@@ -61,7 +62,7 @@ export default function AttendeeList({ rsvps, myAttendeeId }: AttendeeListProps)
           <div className="attendee-list">
             {group.items.map(rsvp => {
               const isMe = rsvp.attendee_id === myAttendeeId
-              const isAnon = rsvp.is_anonymous && !isMe
+              const isAnon = (isEventAnonymous || rsvp.is_anonymous) && !isMe
               const displayName = isAnon ? 'Anonymous Guest' : (rsvp.attendee?.name || 'Unknown')
               const initials = isAnon ? 'AG' : getInitials(displayName)
               

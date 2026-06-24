@@ -19,6 +19,7 @@ create table if not exists loop_events (
   contacts        jsonb default '[]'::jsonb,
   organizer_id    uuid,  -- references auth.users, set below
   status          text not null default 'active' check (status in ('active', 'cancelled')),
+  is_anonymous    boolean not null default false,
   created_at      timestamptz not null default now(),
   updated_at      timestamptz not null default now()
 );
