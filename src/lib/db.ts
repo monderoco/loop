@@ -225,6 +225,15 @@ export async function getMyRSVP(eventId: string, attendeeId: string): Promise<RS
     .maybeSingle()
 
   if (error) { console.error('getMyRSVP error:', error); return null }
+  
+  if (data) {
+    const { data: contactData } = await supabase.rpc('loop_get_my_contact', { p_rsvp_id: data.id })
+    if (contactData) {
+      data.contact_number = contactData.contact_number || undefined
+      data.email = contactData.email || undefined
+    }
+  }
+  
   return data
 }
 
