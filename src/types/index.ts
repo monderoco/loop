@@ -27,6 +27,12 @@ export interface Attendee {
   created_at: string
 }
 
+export interface PlusOneContact {
+  name: string
+  email?: string
+  phone?: string
+}
+
 export interface RSVP {
   id: string
   event_id: string
@@ -37,8 +43,10 @@ export interface RSVP {
   late_note?: string
   food_pledge?: string
   helping_with_decor: boolean
+  host_activity?: string
   contact_number?: string
   email?: string
+  plus_ones_data?: PlusOneContact[]
   created_at: string
   updated_at: string
   // joined

@@ -57,6 +57,7 @@ create table if not exists loop_rsvps (
   helping_with_decor boolean not null default false,
   created_at         timestamptz not null default now(),
   updated_at         timestamptz not null default now(),
+  host_activity      text,
 
   unique (event_id, attendee_id)
 );
@@ -123,8 +124,9 @@ create table if not exists loop_rsvp_contacts (
   rsvp_id        uuid primary key references loop_rsvps(id) on delete cascade,
   contact_number text,
   email          text,
-  created_at     timestamptz not null default now(),
-  updated_at     timestamptz not null default now()
+  plus_ones_data jsonb default '[]'::jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
 );
 
 alter table loop_rsvp_contacts enable row level security;
@@ -143,16 +145,17 @@ create policy "contacts_public_update"
 
 -- ── Helper function: secure contact upsert ──────────────────
 -- Allows guests to upsert their contact info without needing SELECT permissions
-create or replace function loop_upsert_contact(p_rsvp_id uuid, p_contact_number text, p_email text)
+create or replace function loop_upsert_contact(p_rsvp_id uuid, p_contact_number text, p_email text, p_plus_ones_data jsonb default '[]'::jsonb)
 returns void
 language sql
 security definer
 as $$
-  insert into loop_rsvp_contacts (rsvp_id, contact_number, email, updated_at)
-  values (p_rsvp_id, p_contact_number, p_email, now())
+  insert into loop_rsvp_contacts (rsvp_id, contact_number, email, plus_ones_data, updated_at)
+  values (p_rsvp_id, p_contact_number, p_email, p_plus_ones_data, now())
   on conflict (rsvp_id) do update
   set contact_number = excluded.contact_number,
       email = excluded.email,
+      plus_ones_data = excluded.plus_ones_data,
       updated_at = excluded.updated_at;
 $$;
 
@@ -161,7 +164,7 @@ returns json
 language sql
 security definer
 as $$
-  select json_build_object('contact_number', contact_number, 'email', email)
+  select json_build_object('contact_number', contact_number, 'email', email, 'plus_ones_data', plus_ones_data)
   from loop_rsvp_contacts
   where rsvp_id = p_rsvp_id;
 $$;

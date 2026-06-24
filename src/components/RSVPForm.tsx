@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { getMyRSVP, upsertRSVP, getEventRSVPs } from '../lib/db'
 import {
   CheckCircle2, XCircle, HelpCircle, Clock, Palette,
-  UtensilsCrossed, Loader2, AlertCircle, Save, Phone, Mail, Users
+  UtensilsCrossed, Loader2, AlertCircle, Save, Phone, Mail, Users, Gamepad2
 } from 'lucide-react'
 
 const FOOD_OPTIONS = [
@@ -39,6 +39,11 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
   const [helpingWithDecor, setHelpingWithDecor] = useState(false)
   const [contactNumber, setContactNumber] = useState('')
   const [email, setEmail] = useState('')
+  const [hostActivity, setHostActivity] = useState('')
+  const [isHosting, setIsHosting] = useState(false)
+  const [plusOnesData, setPlusOnesData] = useState<any[]>([])
+  const [showPlusOnesData, setShowPlusOnesData] = useState(false)
+  
   const [showDetails, setShowDetails] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -59,6 +64,9 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
       setHelpingWithDecor(rsvp.helping_with_decor)
       setContactNumber(rsvp.contact_number || '')
       setEmail(rsvp.email || '')
+      setHostActivity(rsvp.host_activity || '')
+      setIsHosting(!!rsvp.host_activity)
+      setPlusOnesData(rsvp.plus_ones_data || [])
       setShowDetails(true)
     }
     setLoading(false)
@@ -80,8 +88,10 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
       late_note: isLate ? lateNote : undefined,
       food_pledge: finalFood || undefined,
       helping_with_decor: helpingWithDecor,
+      host_activity: isHosting ? (hostActivity || undefined) : undefined,
       contact_number: contactNumber || undefined,
       email: email || undefined,
+      plus_ones_data: plusOnes > 0 ? plusOnesData.slice(0, plusOnes) : undefined,
     })
     if (!result) {
       setError('Could not save your RSVP. Please try again.')
@@ -94,7 +104,7 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
       onRSVPChange?.(all)
     }
     setSaving(false)
-  }, [session, status, eventId, plusOnes, isLate, lateNote, foodPledge, customFood, helpingWithDecor, contactNumber, email, onRSVPChange])
+  }, [session, status, eventId, plusOnes, isLate, lateNote, foodPledge, customFood, helpingWithDecor, contactNumber, email, hostActivity, isHosting, plusOnesData, onRSVPChange])
 
   if (loading) {
     return (
@@ -164,6 +174,38 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
               onChange={e => setPlusOnes(Math.max(0, parseInt(e.target.value || '0', 10)))}
               style={{ width: '100%', maxWidth: '200px' }}
             />
+            {plusOnes > 0 && (
+              <div style={{ marginTop: '0.5rem', background: 'var(--surface-sunken)', padding: '1rem', borderRadius: '8px' }}>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => setShowPlusOnesData(!showPlusOnesData)}
+                  style={{ width: '100%', fontSize: '0.85rem', padding: '0.5rem' }}
+                >
+                  {showPlusOnesData ? 'Hide +1 Details' : 'Add contact info for your +1s (Optional)'}
+                </button>
+                {showPlusOnesData && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+                    {Array.from({ length: plusOnes }).map((_, i) => {
+                      const data = plusOnesData[i] || { name: '', email: '', phone: '' }
+                      const updateData = (field: string, value: string) => {
+                        const newData = [...plusOnesData]
+                        newData[i] = { ...data, [field]: value }
+                        setPlusOnesData(newData)
+                      }
+                      return (
+                        <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', borderLeft: '2px solid var(--accent-purple)', paddingLeft: '0.75rem' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Guest {i + 1}</span>
+                          <input className="input" placeholder="Name" value={data.name} onChange={e => updateData('name', e.target.value)} />
+                          <input className="input" placeholder="Email" type="email" value={data.email} onChange={e => updateData('email', e.target.value)} />
+                          <input className="input" placeholder="Phone" type="tel" value={data.phone} onChange={e => updateData('phone', e.target.value)} />
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Late arrival */}
@@ -260,6 +302,35 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
               <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 400 }}>Happy to arrive early and set things up</span>
             </div>
           </label>
+
+          {/* Hosting Activity */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <label className="checkbox-row" htmlFor="chk-host">
+              <input
+                id="chk-host"
+                type="checkbox"
+                checked={isHosting}
+                onChange={e => setIsHosting(e.target.checked)}
+              />
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  <Gamepad2 size={14} color="var(--accent-amber)" />
+                  I'd like to host an activity
+                </div>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 400 }}>e.g. Bingo, board games, karaoke</span>
+              </div>
+            </label>
+            {isHosting && (
+              <input
+                id="input-host-activity"
+                className="input"
+                type="text"
+                placeholder="What activity would you like to host?"
+                value={hostActivity}
+                onChange={e => setHostActivity(e.target.value)}
+              />
+            )}
+          </div>
 
           {/* Contact info */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.5rem' }}>

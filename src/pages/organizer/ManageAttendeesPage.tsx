@@ -5,7 +5,7 @@ import { format } from 'date-fns'
 import {
   ArrowLeft, Users, Palette, Clock,
   Pencil, Trash2, Check, X, Loader2, AlertCircle,
-  CheckCircle2, HelpCircle, XCircle, ExternalLink
+  CheckCircle2, HelpCircle, XCircle, ExternalLink, Gamepad2
 } from 'lucide-react'
 
 function navigate(hash: string) { window.location.hash = hash }
@@ -306,6 +306,16 @@ export default function ManageAttendeesPage({ eventId }: ManageAttendeesPageProp
                                     ✉️ {rsvp.email}
                                   </span>
                                 )}
+                                {rsvp.plus_ones_data && rsvp.plus_ones_data.length > 0 && (
+                                  <div style={{ display: 'flex', flexDirection: 'column', marginTop: '0.4rem', borderLeft: '2px solid var(--accent-purple)', paddingLeft: '0.4rem' }}>
+                                    <span style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-secondary)' }}>+1 Details:</span>
+                                    {rsvp.plus_ones_data.map((po, i) => (
+                                      <div key={i} style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                        {po.name || 'Unnamed'} {po.phone ? `📞 ${po.phone}` : ''} {po.email ? `✉️ ${po.email}` : ''}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
@@ -335,7 +345,7 @@ export default function ManageAttendeesPage({ eventId }: ManageAttendeesPageProp
                       )}
                     </td>
 
-                    {/* Extras (decor, late) */}
+                    {/* Extras (decor, late, host) */}
                     <td style={{ padding: '0.75rem 1rem' }}>
                       <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
                         {rsvp.helping_with_decor && (
@@ -346,6 +356,11 @@ export default function ManageAttendeesPage({ eventId }: ManageAttendeesPageProp
                         {rsvp.is_late && (
                           <span className="badge badge-late" title={rsvp.late_note || 'Late'}>
                             <Clock size={10} /> Late
+                          </span>
+                        )}
+                        {rsvp.host_activity && (
+                          <span className="badge" style={{ background: 'var(--accent-amber-light)', color: '#92400e' }} title={`Hosting: ${rsvp.host_activity}`}>
+                            <Gamepad2 size={10} /> Hosting
                           </span>
                         )}
                       </div>
