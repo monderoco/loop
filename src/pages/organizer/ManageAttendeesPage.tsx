@@ -323,11 +323,16 @@ export default function ManageAttendeesPage({ eventId }: ManageAttendeesPageProp
                             {(rsvp.attendee?.name || '?').slice(0, 2).toUpperCase()}
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                            <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                               {rsvp.attendee?.name || '—'}
                               {rsvp.plus_ones > 0 && (
-                                <span style={{ marginLeft: '0.4rem', fontSize: '0.75rem', color: 'var(--accent-purple)', fontWeight: 700 }}>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--accent-purple)', fontWeight: 700 }}>
                                   (+{rsvp.plus_ones})
+                                </span>
+                              )}
+                              {rsvp.is_anonymous && (
+                                <span className="badge" style={{ background: 'var(--surface-sunken)', color: 'var(--text-muted)', fontSize: '0.65rem', padding: '0.1rem 0.4rem', marginLeft: '0.2rem' }}>
+                                  Anonymous
                                 </span>
                               )}
                             </span>

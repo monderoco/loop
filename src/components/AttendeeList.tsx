@@ -61,6 +61,10 @@ export default function AttendeeList({ rsvps, myAttendeeId }: AttendeeListProps)
           <div className="attendee-list">
             {group.items.map(rsvp => {
               const isMe = rsvp.attendee_id === myAttendeeId
+              const isAnon = rsvp.is_anonymous && !isMe
+              const displayName = isAnon ? 'Anonymous Guest' : (rsvp.attendee?.name || 'Unknown')
+              const initials = isAnon ? 'AG' : getInitials(displayName)
+              
               return (
                 <div
                   key={rsvp.id}
@@ -69,16 +73,21 @@ export default function AttendeeList({ rsvps, myAttendeeId }: AttendeeListProps)
                 >
                   <div
                     className="avatar"
-                    style={isMe ? { background: 'linear-gradient(135deg, var(--accent-purple), var(--accent-pink))' } : undefined}
+                    style={isMe ? { background: 'linear-gradient(135deg, var(--accent-purple), var(--accent-pink))' } : (isAnon ? { background: 'var(--surface-sunken)' } : undefined)}
                   >
-                    {getInitials(rsvp.attendee?.name || '?')}
+                    {initials}
                   </div>
 
                   <div className="attendee-row__name">
-                    {rsvp.attendee?.name || 'Unknown'}
+                    {displayName}
+                    {isAnon && (
+                      <span style={{ marginLeft: '0.4rem', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                        (hidden)
+                      </span>
+                    )}
                     {isMe && (
                       <span style={{ marginLeft: '0.4rem', fontSize: '0.72rem', color: 'var(--text-accent)', fontWeight: 500 }}>
-                        (you)
+                        (you) {rsvp.is_anonymous && <span style={{ color: 'var(--text-muted)' }}>— hidden from public</span>}
                       </span>
                     )}
                   </div>

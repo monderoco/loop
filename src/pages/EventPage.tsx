@@ -260,9 +260,15 @@ export default function EventPage({ eventId }: EventPageProps) {
                   ) : (
                     rsvps.filter(r => r.food_pledge).map(r => {
                       const pledges = r.food_pledge!.split(',').map(p => p.trim()).filter(Boolean);
+                      const isAnon = r.is_anonymous && r.attendee_id !== session?.attendeeId;
+                      const displayName = isAnon ? 'Anonymous Guest' : r.attendee?.name;
                       return (
                         <div key={r.id} style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)' }}>
-                          <div style={{ color: 'var(--text-primary)', fontWeight: 600, marginBottom: '0.4rem' }}>{r.attendee?.name}</div>
+                          <div style={{ color: 'var(--text-primary)', fontWeight: 600, marginBottom: '0.4rem' }}>
+                            {displayName}
+                            {isAnon && <span style={{ marginLeft: '0.4rem', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 400 }}>(hidden)</span>}
+                            {r.attendee_id === session?.attendeeId && <span style={{ marginLeft: '0.4rem', fontSize: '0.75rem', color: 'var(--text-accent)', fontWeight: 500 }}>(you)</span>}
+                          </div>
                           <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
                             {pledges.map((p, i) => (
                               <span key={i} className="badge badge-food" style={{ fontSize: '0.8rem', padding: '0.2rem 0.6rem' }}>{p}</span>
@@ -280,14 +286,21 @@ export default function EventPage({ eventId }: EventPageProps) {
                   {rsvps.filter(r => r.helping_with_decor).length === 0 ? (
                     <p style={{ color: 'var(--text-muted)' }}>No decor helpers yet.</p>
                   ) : (
-                    rsvps.filter(r => r.helping_with_decor).map(r => (
-                      <div key={r.id} style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border)' }}>
-                        <div className="avatar" style={{ width: '1.5rem', height: '1.5rem', fontSize: '0.6rem' }}>
-                          {r.attendee?.name.slice(0, 2).toUpperCase()}
+                    rsvps.filter(r => r.helping_with_decor).map(r => {
+                      const isAnon = r.is_anonymous && r.attendee_id !== session?.attendeeId;
+                      const displayName = isAnon ? 'Anonymous Guest' : r.attendee?.name;
+                      const initials = isAnon ? 'AG' : r.attendee?.name.slice(0, 2).toUpperCase();
+                      return (
+                        <div key={r.id} style={{ fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border)' }}>
+                          <div className="avatar" style={{ width: '1.5rem', height: '1.5rem', fontSize: '0.6rem', background: isAnon ? 'var(--surface-sunken)' : undefined }}>
+                            {initials}
+                          </div>
+                          {displayName}
+                          {isAnon && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 400 }}>(hidden)</span>}
+                          {r.attendee_id === session?.attendeeId && <span style={{ fontSize: '0.75rem', color: 'var(--text-accent)', fontWeight: 500 }}>(you)</span>}
                         </div>
-                        {r.attendee?.name}
-                      </div>
-                    ))
+                      )
+                    })
                   )}
                 </div>
               )}
@@ -299,9 +312,15 @@ export default function EventPage({ eventId }: EventPageProps) {
                   ) : (
                     rsvps.filter(r => r.host_activity).map(r => {
                       const activities = r.host_activity!.split(',').map(a => a.trim()).filter(Boolean);
+                      const isAnon = r.is_anonymous && r.attendee_id !== session?.attendeeId;
+                      const displayName = isAnon ? 'Anonymous Guest' : r.attendee?.name;
                       return (
                         <div key={r.id} style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)' }}>
-                          <div style={{ color: 'var(--text-primary)', fontWeight: 600, marginBottom: '0.4rem' }}>{r.attendee?.name}</div>
+                          <div style={{ color: 'var(--text-primary)', fontWeight: 600, marginBottom: '0.4rem' }}>
+                            {displayName}
+                            {isAnon && <span style={{ marginLeft: '0.4rem', fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 400 }}>(hidden)</span>}
+                            {r.attendee_id === session?.attendeeId && <span style={{ marginLeft: '0.4rem', fontSize: '0.75rem', color: 'var(--text-accent)', fontWeight: 500 }}>(you)</span>}
+                          </div>
                           <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
                             {activities.map((a, i) => (
                               <span key={i} className="badge" style={{ background: 'rgba(245,158,11,0.1)', color: '#d97706', border: '1px solid rgba(245,158,11,0.2)', fontSize: '0.8rem', padding: '0.2rem 0.6rem' }}>{a}</span>

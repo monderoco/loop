@@ -57,6 +57,7 @@ create table if not exists loop_rsvps (
   late_note          text,
   food_pledge        text,
   helping_with_decor boolean not null default false,
+  is_anonymous       boolean not null default false,
   created_at         timestamptz not null default now(),
   updated_at         timestamptz not null default now(),
   host_activity      text,

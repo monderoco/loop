@@ -45,6 +45,7 @@ export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPF
   const [isHosting, setIsHosting] = useState(false)
   const [plusOnesData, setPlusOnesData] = useState<any[]>([])
   const [showPlusOnesData, setShowPlusOnesData] = useState(false)
+  const [isAnonymous, setIsAnonymous] = useState(false)
   
   const [showDetails, setShowDetails] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -69,6 +70,7 @@ export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPF
       setHostActivity(rsvp.host_activity || '')
       setIsHosting(!!rsvp.host_activity)
       setPlusOnesData(rsvp.plus_ones_data || [])
+      setIsAnonymous(rsvp.is_anonymous || false)
       setShowDetails(true)
     }
     setLoading(false)
@@ -94,6 +96,7 @@ export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPF
       contact_number: contactNumber || undefined,
       email: email || undefined,
       plus_ones_data: plusOnes > 0 ? plusOnesData.slice(0, plusOnes) : undefined,
+      is_anonymous: isAnonymous,
     })
     if (!result) {
       setError('Could not save your RSVP. Please try again.')
@@ -106,7 +109,7 @@ export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPF
       onRSVPChange?.(all)
     }
     setSaving(false)
-  }, [session, status, eventId, plusOnes, isLate, lateNote, foodPledge, customFood, helpingWithDecor, contactNumber, email, hostActivity, isHosting, plusOnesData, onRSVPChange])
+  }, [session, status, eventId, plusOnes, isLate, lateNote, foodPledge, customFood, helpingWithDecor, contactNumber, email, hostActivity, isHosting, plusOnesData, isAnonymous, onRSVPChange])
 
   if (loading) {
     return (
@@ -382,6 +385,20 @@ export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPF
               />
             </div>
           </div>
+
+          <label className="checkbox-label" style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginTop: '0.5rem' }}>
+            <input
+              type="checkbox"
+              checked={isAnonymous}
+              onChange={e => setIsAnonymous(e.target.checked)}
+              className="checkbox"
+            />
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontWeight: 600 }}>Hide my name from public guest list</span>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>You will appear as "Anonymous Guest" to everyone except the organizer.</span>
+            </div>
+          </label>
+
           <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Only the organiser can see your contact info.</span>
         </>
       )}

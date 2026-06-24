@@ -56,6 +56,7 @@ export interface RSVP {
   contact_number?: string
   email?: string
   plus_ones_data?: PlusOneContact[]
+  is_anonymous?: boolean
   created_at: string
   updated_at: string
   // joined
