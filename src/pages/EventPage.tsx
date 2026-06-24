@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { getEventRSVPs } from '../lib/db'
 import { useAuth } from '../context/AuthContext'
 import { format } from 'date-fns'
-import { MapPin, Calendar, Clock, Users, UtensilsCrossed, Palette } from 'lucide-react'
+import { MapPin, Calendar, Clock, Users, UtensilsCrossed, Palette, Gamepad2 } from 'lucide-react'
 import Markdown from '../components/Markdown'
 import RSVPForm from '../components/RSVPForm'
 import AttendeeList from '../components/AttendeeList'
@@ -52,6 +52,7 @@ export default function EventPage({ eventId }: EventPageProps) {
   const maybe = rsvps.filter(r => r.status === 'maybe').length
   const decor = rsvps.filter(r => r.helping_with_decor).length
   const food = rsvps.filter(r => r.food_pledge).length
+  const activity = rsvps.filter(r => r.host_activity).length
 
   if (loading) {
     return (
@@ -103,7 +104,16 @@ export default function EventPage({ eventId }: EventPageProps) {
             </div>
             <div className="event-hero__meta-item">
               <MapPin size={15} color="var(--accent-cyan)" />
-              {event.location}
+              {event.location ? (
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(event.location)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: 'inherit', textDecoration: 'underline', textDecorationStyle: 'dotted', textUnderlineOffset: '4px' }}
+                >
+                  {event.location}
+                </a>
+              ) : 'TBD'}
             </div>
             <div className="event-hero__meta-item">
               <Users size={15} color="var(--accent-emerald)" />
@@ -128,14 +138,24 @@ export default function EventPage({ eventId }: EventPageProps) {
               <div className="stat-number" style={{ color: 'var(--accent-emerald)' }}>{going}</div>
               <div className="stat-cell__label">Going</div>
             </div>
-            <div className="stat-cell">
-              <div className="stat-number" style={{ color: '#fdba74' }}>{food}</div>
-              <div className="stat-cell__label">Food pledges</div>
-            </div>
-            <div className="stat-cell">
-              <div className="stat-number" style={{ color: 'var(--text-accent)' }}>{decor}</div>
-              <div className="stat-cell__label">Decor helpers</div>
-            </div>
+            {food > 0 && (
+              <div className="stat-cell">
+                <div className="stat-number" style={{ color: '#fdba74' }}>{food}</div>
+                <div className="stat-cell__label">Food pledges</div>
+              </div>
+            )}
+            {decor > 0 && (
+              <div className="stat-cell">
+                <div className="stat-number" style={{ color: 'var(--text-accent)' }}>{decor}</div>
+                <div className="stat-cell__label">Decor helpers</div>
+              </div>
+            )}
+            {activity > 0 && (
+              <div className="stat-cell">
+                <div className="stat-number" style={{ color: 'var(--accent-amber)' }}>{activity}</div>
+                <div className="stat-cell__label">Activities</div>
+              </div>
+            )}
           </div>
         )}
 
@@ -172,6 +192,7 @@ export default function EventPage({ eventId }: EventPageProps) {
                 <RSVPForm
                   eventId={event.id}
                   onRSVPChange={setRsvps}
+                  allRsvps={rsvps}
                 />
               ) : (
               <div
@@ -207,13 +228,13 @@ export default function EventPage({ eventId }: EventPageProps) {
               </div>
             ))}
 
-            {/* Food & Decor summary (if there are pledges) */}
-            {(food > 0 || decor > 0) && (
+            {/* Food, Decor & Activities summary (if there are pledges) */}
+            {(food > 0 || decor > 0 || activity > 0) && (
               <div
                 className="card fade-in"
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: food > 0 && decor > 0 ? '1fr 1fr' : '1fr',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                   gap: '1.5rem',
                 }}
               >
@@ -223,15 +244,22 @@ export default function EventPage({ eventId }: EventPageProps) {
                       <UtensilsCrossed size={15} color="var(--accent-amber)" />
                       <span className="section-heading" style={{ margin: 0 }}>Food pledges</span>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                       {rsvps
                         .filter(r => r.food_pledge)
-                        .map(r => (
-                          <div key={r.id} style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                            <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{r.attendee?.name}</span>
-                            {' — '}{r.food_pledge}
-                          </div>
-                        ))}
+                        .map(r => {
+                          const pledges = r.food_pledge!.split(',').map(p => p.trim()).filter(Boolean);
+                          return (
+                            <div key={r.id} style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                              <div style={{ color: 'var(--text-primary)', fontWeight: 600, marginBottom: '0.2rem' }}>{r.attendee?.name}</div>
+                              <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                                {pledges.map((p, i) => (
+                                  <span key={i} className="badge badge-food" style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem' }}>{p}</span>
+                                ))}
+                              </div>
+                            </div>
+                          )
+                        })}
                     </div>
                   </div>
                 )}
@@ -247,6 +275,24 @@ export default function EventPage({ eventId }: EventPageProps) {
                         .map(r => (
                           <div key={r.id} style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                             <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{r.attendee?.name}</span>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+                {activity > 0 && (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                      <Gamepad2 size={15} color="var(--accent-amber)" />
+                      <span className="section-heading" style={{ margin: 0 }}>Activities</span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {rsvps
+                        .filter(r => r.host_activity)
+                        .map(r => (
+                          <div key={r.id} style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                            <div style={{ color: 'var(--text-primary)', fontWeight: 600, marginBottom: '0.2rem' }}>{r.attendee?.name}</div>
+                            <span className="badge" style={{ background: 'rgba(245,158,11,0.1)', color: '#d97706', border: '1px solid rgba(245,158,11,0.2)', fontSize: '0.7rem', padding: '0.15rem 0.4rem' }}>{r.host_activity}</span>
                           </div>
                         ))}
                     </div>

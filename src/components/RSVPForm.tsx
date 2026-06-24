@@ -19,15 +19,17 @@ const FOOD_OPTIONS = [
   { emoji: '🌮', label: 'Tacos' },
   { emoji: '🍕', label: 'Pizza' },
   { emoji: '🥘', label: 'Stew / Curry' },
+  { emoji: '🍰', label: 'Cake' },
   { emoji: '✏️', label: 'Other (describe)' },
 ]
 
 interface RSVPFormProps {
   eventId: string
   onRSVPChange?: (rsvps: RSVP[]) => void
+  allRsvps?: RSVP[]
 }
 
-export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
+export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPFormProps) {
   const { session } = useAuth()
   const [myRSVP, setMyRSVP] = useState<RSVP | null>(null)
   const [status, setStatus] = useState<'going' | 'not_going' | 'maybe' | null>(null)
@@ -115,6 +117,15 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
     )
   }
 
+  const currentFood = foodPledge === '✏️ Other (describe)' ? customFood : foodPledge;
+  const currentFoodItems = currentFood.split(',').map(f => f.trim()).filter(Boolean);
+  
+  const othersBringingFood = allRsvps.filter(r => {
+    if (r.attendee_id === session?.attendeeId) return false;
+    if (!r.food_pledge) return false;
+    const theirItems = r.food_pledge.split(',').map(f => f.trim().toLowerCase());
+    return currentFoodItems.some(item => theirItems.includes(item.toLowerCase()));
+  }).length;
 
   return (
     <div className="card fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -239,13 +250,15 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
 
           {/* Food pledge */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
               <UtensilsCrossed size={15} color="var(--accent-amber)" />
               <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Food pledge</span>
-              {foodPledge && (
-                <span className="badge badge-food" style={{ marginLeft: 'auto' }}>
-                  {foodPledge !== '✏️ Other (describe)' ? foodPledge : customFood || 'Custom'}
-                </span>
+              {currentFoodItems.length > 0 && (
+                <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap', marginLeft: 'auto' }}>
+                  {currentFoodItems.map((f, i) => (
+                    <span key={i} className="badge badge-food">{f}</span>
+                  ))}
+                </div>
               )}
             </div>
 
@@ -272,11 +285,17 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
                 id="input-custom-food"
                 className="input"
                 type="text"
-                placeholder="What will you bring?"
+                placeholder="What will you bring? (e.g. chips, salsa)"
                 value={customFood}
                 onChange={e => setCustomFood(e.target.value)}
                 style={{ marginTop: '0.6rem' }}
               />
+            )}
+
+            {othersBringingFood > 0 && currentFoodItems.length > 0 && (
+              <p style={{ fontSize: '0.78rem', color: 'var(--accent-amber)', marginTop: '0.5rem', fontWeight: 500 }}>
+                💡 Heads up! {othersBringingFood === 1 ? '1 other guest is' : `${othersBringingFood} other guests are`} bringing something similar.
+              </p>
             )}
 
             {!foodPledge && (
