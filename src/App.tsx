@@ -24,14 +24,14 @@ function parsePath(path: string): Route {
   if (path === 'organizer/dashboard') return { page: 'organizer-dashboard' }
   if (path === 'organizer/event/new') return { page: 'event-form' }
 
-  const editMatch = path.match(/^organizer\/event\/([a-zA-Z0-9-]+)\/edit$/)
+  const editMatch = path.match(/^organizer\/event\/([a-zA-Z0-9-]+)\/edit\/?$/)
   if (editMatch) return { page: 'event-form', eventId: editMatch[1] }
 
-  const manageMatch = path.match(/^organizer\/event\/([a-zA-Z0-9-]+)\/manage$/)
+  const manageMatch = path.match(/^organizer\/event\/([a-zA-Z0-9-]+)\/manage\/?$/)
   if (manageMatch) return { page: 'manage-attendees', eventId: manageMatch[1] }
 
   // Guest event route
-  const eventMatch = path.match(/^event\/([a-zA-Z0-9-]+)$/)
+  const eventMatch = path.match(/^event\/([a-zA-Z0-9-]+)\/?$/)
   if (eventMatch) return { page: 'event', eventId: eventMatch[1] }
 
   return { page: 'demo' }
