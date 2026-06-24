@@ -120,7 +120,8 @@ create policy "rsvps_public_read"
 -- Stores private contact numbers for guests.
 create table if not exists loop_rsvp_contacts (
   rsvp_id        uuid primary key references loop_rsvps(id) on delete cascade,
-  contact_number text not null,
+  contact_number text,
+  email          text,
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now()
 );

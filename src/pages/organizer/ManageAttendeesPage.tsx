@@ -288,10 +288,19 @@ export default function ManageAttendeesPage({ eventId }: ManageAttendeesPageProp
                             <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>
                               {rsvp.attendee?.name || '—'}
                             </span>
-                            {rsvp.contact_number && (
-                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                {rsvp.contact_number}
-                              </span>
+                            {(rsvp.contact_number || rsvp.email) && (
+                              <div style={{ display: 'flex', flexDirection: 'column', marginTop: '0.2rem' }}>
+                                {rsvp.contact_number && (
+                                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                    📞 {rsvp.contact_number}
+                                  </span>
+                                )}
+                                {rsvp.email && (
+                                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                    ✉️ {rsvp.email}
+                                  </span>
+                                )}
+                              </div>
                             )}
                           </div>
                         </div>

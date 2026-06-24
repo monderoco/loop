@@ -37,6 +37,7 @@ export interface RSVP {
   food_pledge?: string
   helping_with_decor: boolean
   contact_number?: string
+  email?: string
   created_at: string
   updated_at: string
   // joined

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { getMyRSVP, upsertRSVP, getEventRSVPs } from '../lib/db'
 import {
   CheckCircle2, XCircle, HelpCircle, Clock, Palette,
-  UtensilsCrossed, Loader2, AlertCircle, Save, Phone
+  UtensilsCrossed, Loader2, AlertCircle, Save, Phone, Mail
 } from 'lucide-react'
 
 const FOOD_OPTIONS = [
@@ -37,6 +37,7 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
   const [customFood, setCustomFood] = useState('')
   const [helpingWithDecor, setHelpingWithDecor] = useState(false)
   const [contactNumber, setContactNumber] = useState('')
+  const [email, setEmail] = useState('')
   const [showDetails, setShowDetails] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -55,6 +56,7 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
       setFoodPledge(rsvp.food_pledge || '')
       setHelpingWithDecor(rsvp.helping_with_decor)
       setContactNumber(rsvp.contact_number || '')
+      setEmail(rsvp.email || '')
       setShowDetails(true)
     }
     setLoading(false)
@@ -76,6 +78,7 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
       food_pledge: finalFood || undefined,
       helping_with_decor: helpingWithDecor,
       contact_number: contactNumber || undefined,
+      email: email || undefined,
     })
     if (!result) {
       setError('Could not save your RSVP. Please try again.')
@@ -88,7 +91,7 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
       onRSVPChange?.(all)
     }
     setSaving(false)
-  }, [session, status, eventId, isLate, lateNote, foodPledge, customFood, helpingWithDecor, contactNumber, onRSVPChange])
+  }, [session, status, eventId, isLate, lateNote, foodPledge, customFood, helpingWithDecor, contactNumber, email, onRSVPChange])
 
   if (loading) {
     return (
@@ -237,22 +240,38 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
             </div>
           </label>
 
-          {/* Contact number */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
-            <label className="input-label" htmlFor="input-contact" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <Phone size={14} color="var(--accent-emerald)" />
-              Contact Number (optional)
-            </label>
-            <input
-              id="input-contact"
-              className="input"
-              type="tel"
-              placeholder="e.g. 021 123 4567"
-              value={contactNumber}
-              onChange={e => setContactNumber(e.target.value)}
-            />
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Only the organiser can see this.</span>
+          {/* Contact info */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <label className="input-label" htmlFor="input-contact" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Phone size={14} color="var(--accent-emerald)" />
+                Phone (optional)
+              </label>
+              <input
+                id="input-contact"
+                className="input"
+                type="tel"
+                placeholder="e.g. 021 123 4567"
+                value={contactNumber}
+                onChange={e => setContactNumber(e.target.value)}
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <label className="input-label" htmlFor="input-email" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Mail size={14} color="var(--accent-indigo)" />
+                Email (optional)
+              </label>
+              <input
+                id="input-email"
+                className="input"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+              />
+            </div>
           </div>
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Only the organiser can see your contact info.</span>
         </>
       )}
 

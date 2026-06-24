@@ -202,7 +202,7 @@ export async function upsertOrganizerProfile(name: string): Promise<Organizer | 
 export async function getEventRSVPs(eventId: string): Promise<RSVP[]> {
   const { data, error } = await supabase
     .from('loop_rsvps')
-    .select('*, attendee:loop_attendees(*), contact:loop_rsvp_contacts(contact_number)')
+    .select('*, attendee:loop_attendees(*), contact:loop_rsvp_contacts(contact_number, email)')
     .eq('event_id', eventId)
     .order('created_at', { ascending: true })
 
@@ -210,6 +210,7 @@ export async function getEventRSVPs(eventId: string): Promise<RSVP[]> {
   return (data || []).map((row: any) => ({
     ...row,
     contact_number: row.contact?.contact_number || undefined,
+    email: row.contact?.email || undefined,
     contact: undefined
   }))
 }
@@ -231,7 +232,7 @@ export async function getMyRSVP(eventId: string, attendeeId: string): Promise<RS
 export async function upsertRSVP(
   rsvp: Omit<RSVP, 'id' | 'created_at' | 'updated_at' | 'attendee'>
 ): Promise<RSVP | null> {
-  const { contact_number, ...rsvpData } = rsvp;
+  const { contact_number, email, ...rsvpData } = rsvp;
 
   const { data, error } = await supabase
     .from('loop_rsvps')
@@ -244,16 +245,17 @@ export async function upsertRSVP(
 
   if (error) { console.error('upsertRSVP error:', error); return null }
 
-  if (contact_number) {
+  if (contact_number || email) {
     const { error: contactErr } = await supabase.from('loop_rsvp_contacts').upsert({
       rsvp_id: data.id,
-      contact_number,
+      contact_number: contact_number || null,
+      email: email || null,
       updated_at: new Date().toISOString()
     })
     if (contactErr) console.error('Failed to save contact:', contactErr)
   }
 
-  return { ...data, contact_number }
+  return { ...data, contact_number, email }
 }
 
 /** Delete an RSVP (organizer action) */
