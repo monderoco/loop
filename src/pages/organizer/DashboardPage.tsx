@@ -5,7 +5,7 @@ import type { Event } from '../../types'
 import { format } from 'date-fns'
 import {
   Plus, Calendar, MapPin, Users, Edit3, Trash2,
-  ExternalLink, LogOut, Loader2, AlertCircle
+  ExternalLink, LogOut, Loader2, AlertCircle, Link2, Check
 } from 'lucide-react'
 
 function navigate(hash: string) {
@@ -220,7 +220,16 @@ function EventCard({
   deleting?: boolean
   isPast?: boolean
 }) {
+  const [copied, setCopied] = useState(false)
   const date = new Date(event.event_date)
+
+  function copyShareLink() {
+    const url = `${window.location.origin}${window.location.pathname}#/event/${event.id}`
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
 
   return (
     <div
@@ -273,6 +282,16 @@ function EventCard({
 
       {/* Actions */}
       <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+        <button
+          className="btn btn-secondary btn-sm"
+          onClick={copyShareLink}
+          title={copied ? 'Link copied!' : 'Copy share link'}
+          id={`btn-share-event-${event.id}`}
+          style={copied ? { color: 'var(--accent-emerald)', borderColor: 'rgba(16,185,129,0.4)' } : {}}
+        >
+          {copied ? <Check size={13} /> : <Link2 size={13} />}
+          {copied ? 'Copied!' : 'Share'}
+        </button>
         <a
           href={`#/event/${event.id}`}
           className="btn btn-ghost btn-sm"
