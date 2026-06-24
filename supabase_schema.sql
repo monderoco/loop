@@ -116,6 +116,29 @@ create policy "attendees_organizer_delete"
 create policy "rsvps_public_read"
   on loop_rsvps for select using (true);
 
+-- ── RSVP Contacts (Secure) ──────────────────────────────────
+-- Stores private contact numbers for guests.
+create table if not exists loop_rsvp_contacts (
+  rsvp_id        uuid primary key references loop_rsvps(id) on delete cascade,
+  contact_number text not null,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+
+alter table loop_rsvp_contacts enable row level security;
+
+-- Organizers can read all contacts
+create policy "contacts_organizer_read"
+  on loop_rsvp_contacts for select
+  using (auth.uid() is not null);
+
+-- Anyone can insert or update a contact when RSVPing
+create policy "contacts_public_insert"
+  on loop_rsvp_contacts for insert with check (true);
+
+create policy "contacts_public_update"
+  on loop_rsvp_contacts for update using (true) with check (true);
+
 create policy "rsvps_public_insert"
   on loop_rsvps for insert with check (true);
 

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { getMyRSVP, upsertRSVP, getEventRSVPs } from '../lib/db'
 import {
   CheckCircle2, XCircle, HelpCircle, Clock, Palette,
-  UtensilsCrossed, Loader2, AlertCircle, Save
+  UtensilsCrossed, Loader2, AlertCircle, Save, Phone
 } from 'lucide-react'
 
 const FOOD_OPTIONS = [
@@ -36,6 +36,7 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
   const [foodPledge, setFoodPledge] = useState('')
   const [customFood, setCustomFood] = useState('')
   const [helpingWithDecor, setHelpingWithDecor] = useState(false)
+  const [contactNumber, setContactNumber] = useState('')
   const [showDetails, setShowDetails] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -53,6 +54,7 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
       setLateNote(rsvp.late_note || '')
       setFoodPledge(rsvp.food_pledge || '')
       setHelpingWithDecor(rsvp.helping_with_decor)
+      setContactNumber(rsvp.contact_number || '')
       setShowDetails(true)
     }
     setLoading(false)
@@ -73,6 +75,7 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
       late_note: isLate ? lateNote : undefined,
       food_pledge: finalFood || undefined,
       helping_with_decor: helpingWithDecor,
+      contact_number: contactNumber || undefined,
     })
     if (!result) {
       setError('Could not save your RSVP. Please try again.')
@@ -85,7 +88,7 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
       onRSVPChange?.(all)
     }
     setSaving(false)
-  }, [session, status, eventId, isLate, lateNote, foodPledge, customFood, helpingWithDecor, onRSVPChange])
+  }, [session, status, eventId, isLate, lateNote, foodPledge, customFood, helpingWithDecor, contactNumber, onRSVPChange])
 
   if (loading) {
     return (
@@ -233,6 +236,23 @@ export default function RSVPForm({ eventId, onRSVPChange }: RSVPFormProps) {
               <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 400 }}>Happy to arrive early and set things up</span>
             </div>
           </label>
+
+          {/* Contact number */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
+            <label className="input-label" htmlFor="input-contact" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <Phone size={14} color="var(--accent-emerald)" />
+              Contact Number (optional)
+            </label>
+            <input
+              id="input-contact"
+              className="input"
+              type="tel"
+              placeholder="e.g. 021 123 4567"
+              value={contactNumber}
+              onChange={e => setContactNumber(e.target.value)}
+            />
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Only the organiser can see this.</span>
+          </div>
         </>
       )}
 

@@ -198,16 +198,20 @@ export async function upsertOrganizerProfile(name: string): Promise<Organizer | 
 
 // ── RSVPs ────────────────────────────────────────────────────────────────────
 
-/** Fetch all RSVPs for an event */
+/** Fetch all RSVPs for an event (organizer action) */
 export async function getEventRSVPs(eventId: string): Promise<RSVP[]> {
   const { data, error } = await supabase
     .from('loop_rsvps')
-    .select('*, attendee:loop_attendees(*)')
+    .select('*, attendee:loop_attendees(*), contact:loop_rsvp_contacts(contact_number)')
     .eq('event_id', eventId)
     .order('created_at', { ascending: true })
 
   if (error) { console.error('getEventRSVPs error:', error); return [] }
-  return data || []
+  return (data || []).map((row: any) => ({
+    ...row,
+    contact_number: row.contact?.contact_number || undefined,
+    contact: undefined
+  }))
 }
 
 /** Get a single RSVP for an attendee + event */
@@ -227,17 +231,29 @@ export async function getMyRSVP(eventId: string, attendeeId: string): Promise<RS
 export async function upsertRSVP(
   rsvp: Omit<RSVP, 'id' | 'created_at' | 'updated_at' | 'attendee'>
 ): Promise<RSVP | null> {
+  const { contact_number, ...rsvpData } = rsvp;
+
   const { data, error } = await supabase
     .from('loop_rsvps')
     .upsert(
-      { ...rsvp, updated_at: new Date().toISOString() },
+      { ...rsvpData, updated_at: new Date().toISOString() },
       { onConflict: 'event_id,attendee_id' }
     )
     .select()
     .single()
 
   if (error) { console.error('upsertRSVP error:', error); return null }
-  return data
+
+  if (contact_number) {
+    const { error: contactErr } = await supabase.from('loop_rsvp_contacts').upsert({
+      rsvp_id: data.id,
+      contact_number,
+      updated_at: new Date().toISOString()
+    })
+    if (contactErr) console.error('Failed to save contact:', contactErr)
+  }
+
+  return { ...data, contact_number }
 }
 
 /** Delete an RSVP (organizer action) */

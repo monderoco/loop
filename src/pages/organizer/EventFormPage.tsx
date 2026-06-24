@@ -164,7 +164,21 @@ export default function EventFormPage({ eventId }: EventFormPageProps) {
               type="text"
               placeholder="Summer Garden Party 🌸"
               value={form.title}
-              onChange={e => setField('title', e.target.value)}
+              onChange={e => {
+                const newTitle = e.target.value
+                const oldSlug = form.title.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+                const newSlug = newTitle.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+                
+                setForm(prev => {
+                  const updates = { ...prev, title: newTitle }
+                  if (!prev.slug || prev.slug === oldSlug) {
+                    updates.slug = newSlug
+                  }
+                  return updates
+                })
+                setSaved(false)
+                setError(null)
+              }}
               maxLength={120}
               autoFocus={!isEdit}
             />

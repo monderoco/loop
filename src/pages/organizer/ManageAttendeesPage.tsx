@@ -284,9 +284,16 @@ export default function ManageAttendeesPage({ eventId }: ManageAttendeesPageProp
                           <div className="avatar" style={{ width: '1.9rem', height: '1.9rem', fontSize: '0.7rem' }}>
                             {(rsvp.attendee?.name || '?').slice(0, 2).toUpperCase()}
                           </div>
-                          <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>
-                            {rsvp.attendee?.name || '—'}
-                          </span>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                              {rsvp.attendee?.name || '—'}
+                            </span>
+                            {rsvp.contact_number && (
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                {rsvp.contact_number}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       )}
                     </td>
