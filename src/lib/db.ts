@@ -306,10 +306,10 @@ export async function notifyEventUpdate(eventId: string, updateType: 'update' | 
 
 // ── Device Links ─────────────────────────────────────────────────────────────
 
-export async function createDeviceLink(code: string, secret: string) {
+export async function createDeviceLink(code: string, secret: string, attendeeId?: string) {
   const { error } = await supabase
     .from('loop_device_links')
-    .insert({ code, secret, status: 'pending' })
+    .insert({ code, secret, status: 'pending', attendee_id: attendeeId || null })
   if (error) throw new Error(error.message)
 }
 

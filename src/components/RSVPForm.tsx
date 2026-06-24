@@ -7,6 +7,7 @@ import {
   UtensilsCrossed, Loader2, AlertCircle, Save, Phone, Mail, Users, Gamepad2, Smartphone, X
 } from 'lucide-react'
 import { approveDeviceLink } from '../lib/db'
+import { supabase } from '../lib/supabase'
 
 const FOOD_OPTIONS = [
   { emoji: '🥗', label: 'Salad' },
@@ -58,6 +59,21 @@ export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPF
   const [linkCodeInput, setLinkCodeInput] = useState('')
   const [linkingDevice, setLinkingDevice] = useState(false)
   const [linkSuccess, setLinkSuccess] = useState(false)
+  const [incomingRequest, setIncomingRequest] = useState(false)
+
+  useEffect(() => {
+    if (!session?.attendeeId) return;
+    
+    const channel = supabase.channel(`attendee-links-${session.attendeeId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'loop_device_links', filter: `attendee_id=eq.${session.attendeeId}` }, (payload) => {
+        setLinkCodeInput(payload.new.code)
+        setIncomingRequest(true)
+        setShowDeviceModal(true)
+      })
+      .subscribe()
+      
+    return () => { supabase.removeChannel(channel) }
+  }, [session?.attendeeId])
 
   const loadRSVP = useCallback(async () => {
     if (!session) return
@@ -458,7 +474,7 @@ export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPF
               <h2 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Smartphone size={18} color="var(--accent-purple)" /> Link Device
               </h2>
-              <button className="btn btn-ghost btn-sm" onClick={() => { setShowDeviceModal(false); setLinkSuccess(false); setLinkCodeInput(''); }} style={{ padding: '0.25rem' }}>
+              <button className="btn btn-ghost btn-sm" onClick={() => { setShowDeviceModal(false); setLinkSuccess(false); setLinkCodeInput(''); setIncomingRequest(false); }} style={{ padding: '0.25rem' }}>
                 <X size={16} />
               </button>
             </div>
@@ -469,12 +485,16 @@ export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPF
                   <CheckCircle2 size={48} color="var(--accent-emerald)" style={{ margin: '0 auto 1rem' }} />
                   <h3 style={{ marginBottom: '0.5rem' }}>Device Approved!</h3>
                   <p style={{ color: 'var(--text-secondary)' }}>You can now continue on your other device.</p>
-                  <button className="btn btn-primary" style={{ marginTop: '1.5rem', width: '100%' }} onClick={() => setShowDeviceModal(false)}>Done</button>
+                  <button className="btn btn-primary" style={{ marginTop: '1.5rem', width: '100%' }} onClick={() => { setShowDeviceModal(false); setIncomingRequest(false); }}>Done</button>
                 </div>
               ) : (
                 <>
                   <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                    If you're trying to view your RSVP on another phone or computer, open this page on that device and enter the 6-digit code shown there.
+                    {incomingRequest ? (
+                      <span style={{ color: 'var(--accent-purple)', fontWeight: 600 }}>Another device is trying to access your RSVP! Verify that the code shown on that device matches this one:</span>
+                    ) : (
+                      "If you're trying to view your RSVP on another phone or computer, open this page on that device and enter the 6-digit code shown there."
+                    )}
                   </p>
                   <div className="input-group">
                     <label className="input-label">6-Digit Code</label>
@@ -486,6 +506,7 @@ export default function RSVPForm({ eventId, onRSVPChange, allRsvps = [] }: RSVPF
                       onChange={e => setLinkCodeInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
                       style={{ fontSize: '1.5rem', textAlign: 'center', letterSpacing: '0.2em' }}
                       autoFocus
+                      readOnly={incomingRequest}
                     />
                   </div>
                   

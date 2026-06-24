@@ -92,7 +92,7 @@ export default function PasskeyGate({ onAuthenticated }: PasskeyGateProps) {
   }
 
   /** User confirmed they ARE one of the similar people — try passkey auth */
-  async function handleClaimIdentity() {
+  async function handleClaimIdentity(attendeeId: string) {
     clearError()
     setStep('authenticating')
     const ok = await authenticate()
@@ -105,7 +105,7 @@ export default function PasskeyGate({ onAuthenticated }: PasskeyGateProps) {
       setLinkCode(code)
       setLinkSecret(secret)
       try {
-        await createDeviceLink(code, secret)
+        await createDeviceLink(code, secret, attendeeId)
         setStep('link-device')
       } catch (err) {
         setStep('name')
@@ -266,7 +266,7 @@ export default function PasskeyGate({ onAuthenticated }: PasskeyGateProps) {
               <button
                 key={attendee.id}
                 className="fuzzy-match-option"
-                onClick={handleClaimIdentity}
+                onClick={() => handleClaimIdentity(attendee.id)}
                 id={`fuzzy-option-${attendee.id}`}
               >
                 <div className="avatar" style={{ width: '2.25rem', height: '2.25rem', fontSize: '0.8rem', flexShrink: 0 }}>
