@@ -26,14 +26,23 @@ export function clearSession(): void {
 
 /** Look up an attendee by credential ID */
 export async function findAttendeeByCredentialId(credentialId: string): Promise<Attendee | null> {
-  const { data, error } = await supabase
-    .from('loop_attendees')
-    .select('*')
+  const { data: device, error: deviceError } = await supabase
+    .from('loop_attendee_devices')
+    .select('attendee_id')
     .eq('credential_id', credentialId)
     .maybeSingle()
 
-  if (error) { console.error('findAttendeeByCredentialId error:', error); return null }
-  return data
+  if (deviceError) { console.error('findAttendeeByCredentialId error:', deviceError); return null }
+  if (!device) return null;
+
+  const { data: attendee, error: attendeeError } = await supabase
+    .from('loop_attendees')
+    .select('*')
+    .eq('id', device.attendee_id)
+    .single()
+
+  if (attendeeError) { console.error('findAttendeeByCredentialId error:', attendeeError); return null }
+  return attendee
 }
 
 /**
@@ -73,6 +82,15 @@ export async function createAttendee(
     .single()
 
   if (error) { console.error('createAttendee error:', error); return null }
+  
+  // Also insert into devices table
+  await supabase.from('loop_attendee_devices').insert({
+    attendee_id: data.id,
+    credential_id: credentialId,
+    public_key: publicKey,
+    device_name: 'Original Device'
+  });
+
   return data
 }
 
@@ -284,4 +302,33 @@ export async function notifyEventUpdate(eventId: string, updateType: 'update' | 
     body: { eventId, updateType, message }
   })
   if (error) console.error('notifyEventUpdate error:', error)
+}
+
+// ── Device Links ─────────────────────────────────────────────────────────────
+
+export async function createDeviceLink(code: string, secret: string) {
+  const { error } = await supabase
+    .from('loop_device_links')
+    .insert({ code, secret, status: 'pending' })
+  if (error) throw new Error(error.message)
+}
+
+export async function approveDeviceLink(code: string, attendeeId: string) {
+  const { error } = await supabase.rpc('loop_approve_device_link', {
+    p_code: code,
+    p_attendee_id: attendeeId
+  })
+  if (error) throw new Error(error.message)
+}
+
+export async function consumeDeviceLink(code: string, secret: string, credentialId: string, publicKey: string, deviceName: string): Promise<string> {
+  const { data, error } = await supabase.rpc('loop_consume_device_link', {
+    p_code: code,
+    p_secret: secret,
+    p_credential_id: credentialId,
+    p_public_key: publicKey,
+    p_device_name: deviceName
+  })
+  if (error) throw new Error(error.message)
+  return data as string
 }

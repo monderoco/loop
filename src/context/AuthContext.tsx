@@ -16,6 +16,7 @@ interface AuthContextType {
   signOut: () => void
   error: string | null
   clearError: () => void
+  forceSetSession: (session: PasskeySession) => void
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -109,9 +110,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSessionState(null)
   }, [])
 
+  const forceSetSession = useCallback((s: PasskeySession) => {
+    setSession(s)
+    setSessionState(s)
+  }, [])
+
   return (
     <AuthContext.Provider
-      value={{ session, isLoading, passkeySupported, tryAutoAuth, register, authenticate, signOut, error, clearError }}
+      value={{ session, isLoading, passkeySupported, tryAutoAuth, register, authenticate, signOut, error, clearError, forceSetSession }}
     >
       {children}
     </AuthContext.Provider>

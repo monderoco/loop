@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { findAttendeesByName } from '../lib/db'
 import type { Attendee } from '../types'
-import { Fingerprint, User, AlertCircle, Loader2, UserCheck, UserPlus, ChevronRight } from 'lucide-react'
+import { Fingerprint, User, AlertCircle, Loader2, UserCheck, UserPlus, ChevronRight, Smartphone } from 'lucide-react'
+import { createDeviceLink, consumeDeviceLink } from '../lib/db'
+import { supabase } from '../lib/supabase'
+import { registerPasskey } from '../lib/passkey'
 
 interface PasskeyGateProps {
   onAuthenticated: () => void
@@ -14,6 +17,8 @@ type Step =
   | 'fuzzy-match'      // found similar names — "Is this you?"
   | 'registering'      // creating passkey
   | 'authenticating'   // verifying existing passkey
+  | 'link-device'      // showing code to link device
+  | 'link-ready'       // code approved, ready to register passkey
 
 export default function PasskeyGate({ onAuthenticated }: PasskeyGateProps) {
   const { session, register, authenticate, passkeySupported, error, clearError, isLoading } = useAuth()
@@ -22,6 +27,23 @@ export default function PasskeyGate({ onAuthenticated }: PasskeyGateProps) {
   const [nameError, setNameError] = useState('')
   const [similarAttendees, setSimilarAttendees] = useState<Attendee[]>([])
   const [searchingNames, setSearchingNames] = useState(false)
+  const [linkCode, setLinkCode] = useState('')
+  const [linkSecret, setLinkSecret] = useState('')
+  const { forceSetSession } = useAuth()
+
+  useEffect(() => {
+    if (step !== 'link-device' || !linkCode) return;
+    
+    const channel = supabase.channel(`link-${linkCode}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'loop_device_links', filter: `code=eq.${linkCode}` }, (payload) => {
+        if (payload.new.status === 'approved') {
+          setStep('link-ready')
+        }
+      })
+      .subscribe()
+      
+    return () => { supabase.removeChannel(channel) }
+  }, [step, linkCode])
 
   useEffect(() => {
     if (session) {
@@ -77,8 +99,30 @@ export default function PasskeyGate({ onAuthenticated }: PasskeyGateProps) {
     if (ok) {
       onAuthenticated()
     } else {
-      // Auth failed — the passkey doesn't match; let them register as new
-      setStep('name')
+      // Auth failed — generate device link
+      const code = Math.floor(100000 + Math.random() * 900000).toString()
+      const secret = Math.random().toString(36).substring(2, 15)
+      setLinkCode(code)
+      setLinkSecret(secret)
+      try {
+        await createDeviceLink(code, secret)
+        setStep('link-device')
+      } catch (err) {
+        setStep('name')
+      }
+    }
+  }
+
+  async function handleRegisterLinkedDevice() {
+    clearError()
+    try {
+      const { credentialId, publicKey } = await registerPasskey(name);
+      const attendeeId = await consumeDeviceLink(linkCode, linkSecret, credentialId, publicKey, navigator.userAgent.slice(0, 50));
+      forceSetSession({ attendeeId, name, credentialId });
+      onAuthenticated();
+    } catch (err: unknown) {
+      console.error(err);
+      alert(err instanceof Error ? err.message : 'Registration failed');
     }
   }
 
@@ -138,6 +182,58 @@ export default function PasskeyGate({ onAuthenticated }: PasskeyGateProps) {
               <span>{error}</span>
             </div>
           )}
+        </div>
+      </div>
+    )
+  }
+
+  if (step === 'link-device') {
+    return (
+      <div className="modal-backdrop">
+        <div className="modal fade-in">
+          <div className="modal__icon">
+            <Smartphone size={32} color="var(--accent-purple)" />
+          </div>
+          <h2 className="modal__title">Use your other device</h2>
+          <p className="modal__sub">
+            This device doesn't have your passkey yet. To authorize it, open this event on a device where you are already logged in, click <strong>"Add Device"</strong>, and enter this code:
+          </p>
+          <div style={{ background: 'var(--surface-sunken)', padding: '1.5rem', borderRadius: 'var(--radius-md)', textAlign: 'center', margin: '1rem 0' }}>
+            <span style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '0.2em', color: 'var(--text-primary)' }}>
+              {linkCode}
+            </span>
+          </div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+            Waiting for approval... (do not close this screen)
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem' }}>
+            <button className="btn btn-ghost" onClick={() => setStep('name')}>Cancel</button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (step === 'link-ready') {
+    return (
+      <div className="modal-backdrop">
+        <div className="modal fade-in">
+          <div className="modal__icon passkey-ring">
+            <Fingerprint size={32} color="var(--accent-purple)" />
+          </div>
+          <h2 className="modal__title">Device Approved!</h2>
+          <p className="modal__sub">
+            Your other device approved this login. Click below to save a new passkey to this device.
+          </p>
+          {error && (
+            <div className="alert alert-error" style={{ marginBottom: '1rem' }}>
+              <AlertCircle size={16} style={{ flexShrink: 0 }} />
+              <span>{error}</span>
+            </div>
+          )}
+          <button className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }} onClick={handleRegisterLinkedDevice}>
+            Save Passkey
+          </button>
         </div>
       </div>
     )
