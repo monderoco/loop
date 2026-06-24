@@ -33,7 +33,7 @@ serve(async (req) => {
     // Verify organizer owns event
     const { data: event, error: eventError } = await supabase
       .from('loop_events')
-      .select('title, organizer_id, status')
+      .select('title, slug, organizer_id, status')
       .eq('id', eventId)
       .single();
 
@@ -80,7 +80,7 @@ serve(async (req) => {
               <p style="margin: 0; font-style: italic;">"${message}"</p>
             </div>
           ` : ''}
-          <p>${isCancel ? 'We hope to see you at a future event!' : `Check out the updated details using your original RSVP link: <a href="https://loop.mondero.nz/#/event/${eventId}">View Event</a>`}</p>
+          <p>${isCancel ? 'We hope to see you at a future event!' : `Check out the updated details using your original RSVP link: <a href="https://loop.mondero.nz/#/event/${event.slug || eventId}">View Event</a>`}</p>
         </div>
       `;
 
