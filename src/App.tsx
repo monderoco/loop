@@ -12,6 +12,7 @@ import LandingPage from './pages/LandingPage'
 import type { Route } from './types'
 import './index.css'
 import { navigate } from './lib/router'
+import InAppBrowserWarning from './components/InAppBrowserWarning'
 
 // ── History-based router ───────────────────────────────────────────────────
 
@@ -149,6 +150,7 @@ function Router() {
 export default function App() {
   return (
     <OrganizerProvider>
+      <InAppBrowserWarning />
       <Router />
     </OrganizerProvider>
   )
