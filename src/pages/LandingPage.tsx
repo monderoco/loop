@@ -1,4 +1,4 @@
-import { Fingerprint, Calendar, ArrowRight } from 'lucide-react'
+import { Calendar, ArrowRight } from 'lucide-react'
 import { navigate } from '../lib/router'
 
 export default function LandingPage() {
@@ -27,7 +27,7 @@ export default function LandingPage() {
         </h1>
         
         <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', lineHeight: 1.6, marginBottom: '2rem' }}>
-          The modern way to host events and keep your crew in the loop. No passwords, no hassle. Secured entirely by device passkeys.
+          The modern way to host events and keep your crew in the loop. No passwords, no hassle.
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
@@ -36,7 +36,6 @@ export default function LandingPage() {
           </a>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '1rem' }}>
-            <Fingerprint size={14} />
             Guests join via direct invite link
           </div>
         </div>
