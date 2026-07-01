@@ -1,0 +1,14 @@
+build	Build	﻿2026-07-01T03:43:32.8390008Z ##[group]Run npm run build
+build	Build	2026-07-01T03:43:32.8390305Z ^[[36;1mnpm run build^[[0m
+build	Build	2026-07-01T03:43:32.8417899Z shell: /usr/bin/bash -e {0}
+build	Build	2026-07-01T03:43:32.8418185Z env:
+build	Build	2026-07-01T03:43:32.8418580Z   VITE_SUPABASE_URL: ***
+build	Build	2026-07-01T03:43:32.8419603Z   VITE_SUPABASE_ANON_KEY: ***
+build	Build	2026-07-01T03:43:32.8419840Z ##[endgroup]
+build	Build	2026-07-01T03:43:32.9654837Z 
+build	Build	2026-07-01T03:43:32.9655500Z > rsvp@0.0.0 build
+build	Build	2026-07-01T03:43:32.9656235Z > tsc -b && vite build && node -e "require('fs').copyFileSync('dist/index.html', 'dist/404.html')"
+build	Build	2026-07-01T03:43:32.9656831Z 
+build	Build	2026-07-01T03:43:35.9271882Z ##[error]src/components/RSVPForm.tsx(7,78): error TS6133: 'X' is declared but its value is never read.
+build	Build	2026-07-01T03:43:35.9311011Z ##[error]src/components/RSVPForm.tsx(9,1): error TS6133: 'supabase' is declared but its value is never read.
+build	Build	2026-07-01T03:43:36.3946343Z ##[error]Process completed with exit code 2.

@@ -4,9 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { getMyRSVP, upsertRSVP, getEventRSVPs } from '../lib/db'
 import {
   CheckCircle2, XCircle, HelpCircle, Clock, Palette,
-  UtensilsCrossed, Loader2, AlertCircle, Save, Phone, Mail, Users, Gamepad2, X
+  UtensilsCrossed, Loader2, AlertCircle, Save, Phone, Mail, Users, Gamepad2
 } from 'lucide-react'
-import { supabase } from '../lib/supabase'
 
 const FOOD_OPTIONS = [
   { emoji: '🥗', label: 'Salad' },
