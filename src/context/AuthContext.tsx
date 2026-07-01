@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
 import type { PasskeySession } from '../types'
 import { getSession, setSession, clearSession, findAttendeeByCredentialId, createAttendee } from '../lib/db'
-import { registerPasskey, authenticatePasskey, isPlatformAuthenticatorAvailable } from '../lib/passkey'
+// passkey logic removed
 
 interface AuthContextType {
   session: PasskeySession | null
@@ -9,10 +9,10 @@ interface AuthContextType {
   passkeySupported: boolean
   /** Try to auto-authenticate with a stored credential */
   tryAutoAuth: () => Promise<boolean>
-  /** Register a new passkey with a name */
+  /** Register a new profile */
   register: (name: string) => Promise<void>
-  /** Authenticate with passkey (known credential) */
-  authenticate: () => Promise<boolean>
+  /** Log in as an existing attendee */
+  loginAs: (attendee: any) => Promise<void>
   signOut: () => void
   error: string | null
   clearError: () => void
@@ -24,7 +24,7 @@ const AuthContext = createContext<AuthContextType | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSessionState] = useState<PasskeySession | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [passkeySupported, setPasskeySupported] = useState(false)
+  const [passkeySupported, setPasskeySupported] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const clearError = useCallback(() => setError(null), [])
@@ -46,7 +46,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    isPlatformAuthenticatorAvailable().then(setPasskeySupported)
     tryAutoAuth().then(() => {
       setIsLoading(false)
     })
@@ -56,7 +55,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true)
     setError(null)
     try {
-      const { credentialId, publicKey } = await registerPasskey(name)
+      const credentialId = crypto.randomUUID()
+      const publicKey = 'dummy_key'
       const attendee = await createAttendee(name, credentialId, publicKey)
       if (!attendee) throw new Error('Could not save your profile. Try again.')
 
@@ -76,30 +76,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const authenticate = useCallback(async (): Promise<boolean> => {
+  const loginAs = useCallback(async (attendee: any): Promise<void> => {
     setIsLoading(true)
     setError(null)
     try {
-      const stored = getSession()
-      const { credentialId } = await authenticatePasskey(stored?.credentialId)
-      const attendee = await findAttendeeByCredentialId(credentialId)
-      if (!attendee) {
-        setError('No account found for this passkey.')
-        return false
-      }
-
       const newSession: PasskeySession = {
         attendeeId: attendee.id,
         name: attendee.name,
-        credentialId,
+        credentialId: attendee.credential_id || crypto.randomUUID(),
       }
       setSession(newSession)
       setSessionState(newSession)
-      return true
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Authentication failed'
+      const msg = err instanceof Error ? err.message : 'Login failed'
       setError(msg)
-      return false
     } finally {
       setIsLoading(false)
     }
@@ -117,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ session, isLoading, passkeySupported, tryAutoAuth, register, authenticate, signOut, error, clearError, forceSetSession }}
+      value={{ session, isLoading, passkeySupported, tryAutoAuth, register, loginAs, signOut, error, clearError, forceSetSession }}
     >
       {children}
     </AuthContext.Provider>

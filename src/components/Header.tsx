@@ -1,5 +1,5 @@
 import { useAuth } from '../context/AuthContext'
-import { Fingerprint, LogOut, Settings } from 'lucide-react'
+import { LogOut, Settings } from 'lucide-react'
 import LoopIcon from '../assets/loop-icon.svg'
 import { navigate } from '../lib/router'
 
@@ -45,18 +45,7 @@ export default function Header() {
             </>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  color: 'var(--text-muted)',
-                  fontSize: '0.78rem',
-                }}
-              >
-                <Fingerprint size={13} />
-                <span>Passkey secured</span>
-              </div>
+
               <a
                 href="/organizer"
                 onClick={(e) => { e.preventDefault(); navigate('/organizer') }}
