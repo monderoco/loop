@@ -6,7 +6,6 @@ import { getSession, setSession, clearSession, findAttendeeByCredentialId, creat
 interface AuthContextType {
   session: PasskeySession | null
   isLoading: boolean
-  passkeySupported: boolean
   /** Try to auto-authenticate with a stored credential */
   tryAutoAuth: () => Promise<boolean>
   /** Register a new profile */
@@ -24,7 +23,6 @@ const AuthContext = createContext<AuthContextType | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSessionState] = useState<PasskeySession | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [passkeySupported, setPasskeySupported] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const clearError = useCallback(() => setError(null), [])
@@ -107,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ session, isLoading, passkeySupported, tryAutoAuth, register, loginAs, signOut, error, clearError, forceSetSession }}
+      value={{ session, isLoading, tryAutoAuth, register, loginAs, signOut, error, clearError, forceSetSession }}
     >
       {children}
     </AuthContext.Provider>
